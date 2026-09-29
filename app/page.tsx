@@ -46,11 +46,32 @@ export default function Page() {
   const [query, setQuery] = useState('')
   const [activeSection, setActiveSection] = useState(sections[0].id)
 
+  const scrollDirection = useRef<'down' | 'up'>('down')
+  const lastScrollY = useRef(0)
+
+  useEffect(() => {
+    lastScrollY.current = window.scrollY
+    const handleScroll = () => {
+      const y = window.scrollY
+      if (y > lastScrollY.current + 1) scrollDirection.current = 'down'
+      else if (y < lastScrollY.current - 1) scrollDirection.current = 'up'
+      lastScrollY.current = y
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)
-        if (visible[0]) setActiveSection(visible[0].target.id)
+        const visible = entries.filter((entry) => entry.isIntersecting)
+        if (!visible.length) return
+        visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+        // Scrolling down: commit to the furthest section already reached so the
+        // highlight only moves forward. Scrolling up: fall back to the topmost
+        // visible section so it correctly steps backward.
+        const next = scrollDirection.current === 'up' ? visible[0] : visible[visible.length - 1]
+        setActiveSection(next.target.id)
       },
       { rootMargin: '-120px 0px -55% 0px', threshold: [0.1, 0.35, 0.6] },
     )
@@ -100,7 +121,7 @@ export default function Page() {
 
       <div className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-md">
         <nav className="scrollbar-hide mx-auto flex max-w-6xl gap-2 overflow-x-auto px-5 py-3" aria-label="Categorías del menú">
-          {sections.map(({ id, label, icon: Icon }) => <a key={id} data-category={id} href={`#${id}`} aria-current={activeSection === id ? 'true' : undefined} className={`flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors ${activeSection === id ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
+          {sections.map(({ id, label, icon: Icon }) => <a key={id} data-category={id} href={`#${id}`} aria-current={activeSection === id ? 'true' : undefined} className={`flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all duration-300 ease-out ${activeSection === id ? '-translate-y-0.5 scale-[1.04] border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20' : 'translate-y-0 scale-100 border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
         </nav>
       </div>
 
