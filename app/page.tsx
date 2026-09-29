@@ -179,12 +179,12 @@ export default function Page() {
     const linkCenter = linkRect.left + linkRect.width / 2
     const distance = linkCenter - navCenter
 
-    // Native smooth scroll glides directly to the target position in one
-    // continuous motion (no custom easing loop, no visible travel through
-    // the buttons in between) — this is what makes it read as fluid rather
-    // than a hard instant snap, while the pill above still repaints instantly.
+    // Snap the nav scroll instantly to the target category — no glide
+    // through the buttons in between, matching the pill's instant repaint
+    // above. This is fully independent of the vertical page scroll below,
+    // which stays smooth.
     const target = Math.max(0, Math.min(nav.scrollLeft + distance, nav.scrollWidth - nav.clientWidth))
-    nav.scrollTo({ left: target, behavior: 'smooth' })
+    nav.scrollTo({ left: target, behavior: 'auto' })
   }, [activeSection])
 
   const filtered = useMemo(() => menu.map(section => ({ ...section, items: section.items.filter(([name, description]) => `${name} ${description}`.toLowerCase().includes(query.toLowerCase())) })).filter(section => section.items.length), [query])
