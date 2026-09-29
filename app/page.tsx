@@ -92,12 +92,17 @@ export default function Page() {
   const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({})
   const navAnimationFrame = useRef<number | null>(null)
   const [pillSize, setPillSize] = useState({ width: 0, height: 0 })
+  const [pillX, setPillX] = useState(0)
 
-  // The centered "filled" pill is a fixed overlay, not part of the scrolling
-  // row: the category links slide underneath it while it stays put at the
-  // nav's horizontal center. We still animate the nav's scrollLeft so the
-  // active link ends up under that fixed point, and resize the overlay to
-  // match the active link's measured footprint.
+  // The filled pill is a fixed overlay, not part of the scrolling row: the
+  // category links slide underneath it. We animate the nav's scrollLeft so
+  // the active link ends up centered, and track the pill's horizontal
+  // position from the link's real (scroll-adjusted) location every frame
+  // rather than pinning it to the nav's geometric center. Edge items (the
+  // first/last category) can't scroll far enough to reach true center — the
+  // scrollLeft clamps at 0 or max — so a center-pinned pill would float in
+  // empty space, disconnected from its link. Following the link's actual
+  // position keeps the pill glued to it in every case.
   useLayoutEffect(() => {
     const nav = navRef.current
     const activeLink = linkRefs.current[activeSection]
@@ -107,21 +112,29 @@ export default function Page() {
 
     if (navAnimationFrame.current !== null) cancelAnimationFrame(navAnimationFrame.current)
 
+    const updatePillPosition = () => {
+      setPillX(activeLink.offsetLeft + activeLink.offsetWidth / 2 - nav.scrollLeft)
+    }
+
     const navRect = nav.getBoundingClientRect()
     const linkRect = activeLink.getBoundingClientRect()
     const navCenter = navRect.left + navRect.width / 2
     const linkCenter = linkRect.left + linkRect.width / 2
     const distance = linkCenter - navCenter
 
-    if (Math.abs(distance) <= 1) return
+    const start = nav.scrollLeft
+    const target = Math.max(0, Math.min(start + distance, nav.scrollWidth - nav.clientWidth))
+    const change = target - start
+
+    if (Math.abs(change) <= 1) {
+      updatePillPosition()
+      return
+    }
 
     // Custom eased scroll instead of native `behavior: 'smooth'`: a JS-driven
     // animation can be cancelled instantly when the target changes mid-flight
     // (fast scrolling through categories), while the browser's built-in smooth
     // scroll queues/fights with itself and shows up as visible stutter.
-    const start = nav.scrollLeft
-    const target = Math.max(0, Math.min(start + distance, nav.scrollWidth - nav.clientWidth))
-    const change = target - start
     const duration = 260
     const startTime = performance.now()
     const easeOutCubic = (t: number) => 1 - (1 - t) ** 3
@@ -129,6 +142,7 @@ export default function Page() {
     const step = (now: number) => {
       const elapsed = Math.min((now - startTime) / duration, 1)
       nav.scrollLeft = start + change * easeOutCubic(elapsed)
+      updatePillPosition()
       if (elapsed < 1) navAnimationFrame.current = requestAnimationFrame(step)
     }
     navAnimationFrame.current = requestAnimationFrame(step)
@@ -153,8 +167,8 @@ export default function Page() {
         <div className="relative mx-auto max-w-6xl">
           <div
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-1/2 z-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary shadow-md shadow-primary/20 transition-[width,height] duration-200 ease-out"
-            style={{ width: pillSize.width, height: pillSize.height }}
+            className="pointer-events-none absolute top-1/2 z-0 -translate-y-1/2 rounded-full bg-primary shadow-md shadow-primary/20 transition-[width,height] duration-200 ease-out"
+            style={{ width: pillSize.width, height: pillSize.height, left: pillX, transform: 'translate(-50%, -50%)' }}
           />
           <nav ref={navRef} className="scrollbar-hide relative z-10 flex gap-2 overflow-x-auto px-5 py-3" style={{ willChange: 'scroll-position', WebkitOverflowScrolling: 'touch' }} aria-label="Categorías del menú">
             {sections.map(({ id, label, icon: Icon }) => <a key={id} ref={(el) => { linkRefs.current[id] = el }} data-category={id} href={`#${id}`} aria-current={activeSection === id ? 'true' : undefined} className={`relative z-10 flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors duration-200 ease-out ${activeSection === id ? 'border-transparent bg-transparent text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
