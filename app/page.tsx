@@ -90,6 +90,18 @@ export default function Page() {
     const update = () => {
       ticking = false
       if (!sectionEls.length) return
+
+      // Near the bottom of the page the scroll position is clamped by the
+      // browser before a short last section's top can ever cross the
+      // detection line (there's no more content below it to scroll past).
+      // Without this, the detector keeps reporting the previous section as
+      // active even though the last one is fully visible on screen.
+      const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2
+      if (atBottom) {
+        setActiveSection((prev) => (prev === sectionEls[sectionEls.length - 1].id ? prev : sectionEls[sectionEls.length - 1].id))
+        return
+      }
+
       const line = getLine()
       let current = sectionEls[0].id
       for (const el of sectionEls) {
