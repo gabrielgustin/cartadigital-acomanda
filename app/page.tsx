@@ -61,6 +61,11 @@ export default function Page() {
     return () => observer.disconnect()
   }, [])
 
+  useEffect(() => {
+    const activeLink = document.querySelector<HTMLAnchorElement>(`[data-category="${activeSection}"]`)
+    activeLink?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  }, [activeSection])
+
   const filtered = useMemo(() => menu.map(section => ({ ...section, items: section.items.filter(([name, description]) => `${name} ${description}`.toLowerCase().includes(query.toLowerCase())) })).filter(section => section.items.length), [query])
 
   return (
@@ -74,7 +79,7 @@ export default function Page() {
 
       <div className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-md">
         <nav className="scrollbar-hide mx-auto flex max-w-6xl gap-2 overflow-x-auto px-5 py-3" aria-label="Categorías del menú">
-          {sections.map(({ id, label, icon: Icon }) => <a key={id} href={`#${id}`} aria-current={activeSection === id ? 'true' : undefined} className={`flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors ${activeSection === id ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
+          {sections.map(({ id, label, icon: Icon }) => <a key={id} data-category={id} href={`#${id}`} aria-current={activeSection === id ? 'true' : undefined} className={`flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors ${activeSection === id ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
         </nav>
       </div>
 
