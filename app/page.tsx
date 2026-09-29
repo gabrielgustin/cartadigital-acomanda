@@ -202,6 +202,16 @@ export default function Page() {
 
   const filtered = useMemo(() => menu.map(section => ({ ...section, items: section.items.filter(([name, description]) => `${name} ${description}`.toLowerCase().includes(query.toLowerCase())) })).filter(section => section.items.length), [query])
 
+  const handleCategoryClick = (event: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
+    event.preventDefault()
+    const target = document.getElementById(sectionId)
+    if (!target) return
+
+    const stickyHeight = stickyRef.current?.getBoundingClientRect().height ?? 0
+    const targetTop = target.getBoundingClientRect().top + window.scrollY - stickyHeight - 16
+    window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' })
+  }
+
   return (
     <main className="min-h-screen bg-background text-foreground">
       <header className="hero-pattern border-b border-border">
@@ -218,7 +228,7 @@ export default function Page() {
             style={{ width: pillSize.width, height: pillSize.height, left: pillX, transform: 'translateX(-50%)' }}
           />
           <nav ref={navRef} className="scrollbar-hide relative z-10 flex gap-2 overflow-x-auto px-5 py-3" style={{ willChange: 'scroll-position', WebkitOverflowScrolling: 'touch' }} aria-label="Categorías del menú">
-            {sections.map(({ id, label, icon: Icon }) => <a key={id} ref={(el) => { linkRefs.current[id] = el }} data-category={id} href={`#${id}`} aria-current={activeSection === id ? 'true' : undefined} className={`relative z-10 flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors duration-200 ease-out ${activeSection === id ? 'border-transparent bg-transparent text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
+            {sections.map(({ id, label, icon: Icon }) => <a key={id} ref={(el) => { linkRefs.current[id] = el }} data-category={id} href={`#${id}`} onClick={(event) => handleCategoryClick(event, id)} aria-current={activeSection === id ? 'true' : undefined} className={`relative z-10 flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors duration-200 ease-out ${activeSection === id ? 'border-transparent bg-transparent text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
           </nav>
         </div>
       </div>
