@@ -93,6 +93,36 @@ export default function Page() {
   const navAnimationFrame = useRef<number | null>(null)
   const [pillSize, setPillSize] = useState({ width: 0, height: 0 })
   const [pillX, setPillX] = useState(0)
+  const activeSectionRef = useRef(activeSection)
+
+  useEffect(() => {
+    activeSectionRef.current = activeSection
+  }, [activeSection])
+
+  // The pill's size/position depend on the active link's real layout metrics
+  // (offsetWidth/offsetHeight/offsetLeft), which can shift after mount once
+  // the custom fonts finish loading (FOUT) or on window resize. Re-sync the
+  // pill instantly (no scroll animation) whenever that happens, independent
+  // of the category-change effect below which only fires on navigation.
+  useLayoutEffect(() => {
+    const nav = navRef.current
+    if (!nav) return
+
+    const syncPillInstant = () => {
+      const activeLink = linkRefs.current[activeSectionRef.current]
+      if (!activeLink) return
+      setPillSize({ width: activeLink.offsetWidth, height: activeLink.offsetHeight })
+      setPillX(activeLink.offsetLeft + activeLink.offsetWidth / 2 - nav.scrollLeft)
+    }
+
+    syncPillInstant()
+    document.fonts?.ready?.then(syncPillInstant)
+
+    const resizeObserver = new ResizeObserver(syncPillInstant)
+    resizeObserver.observe(nav)
+
+    return () => resizeObserver.disconnect()
+  }, [])
 
   // The filled pill is a fixed overlay, not part of the scrolling row: the
   // category links slide underneath it. We animate the nav's scrollLeft so
