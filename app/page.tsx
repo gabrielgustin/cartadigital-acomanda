@@ -139,7 +139,27 @@ export default function Page() {
     const resizeObserver = new ResizeObserver(syncPillInstant)
     resizeObserver.observe(nav)
 
-    return () => resizeObserver.disconnect()
+    // Keep the pill glued to its link while the user freely drags/swipes the
+    // nav's own horizontal scroll (independent from the page scroll, which is
+    // what actually changes the active section). Without this, dragging the
+    // nav slides the links underneath a pill whose position was last computed
+    // before the drag, so it visibly detaches and lags behind instead of
+    // traveling together with its link.
+    let scrollTicking = false
+    const onNavScroll = () => {
+      if (scrollTicking) return
+      scrollTicking = true
+      requestAnimationFrame(() => {
+        scrollTicking = false
+        syncPillInstant()
+      })
+    }
+    nav.addEventListener('scroll', onNavScroll, { passive: true })
+
+    return () => {
+      resizeObserver.disconnect()
+      nav.removeEventListener('scroll', onNavScroll)
+    }
   }, [])
 
   // The filled pill is a fixed overlay, not part of the scrolling row: the
