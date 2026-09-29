@@ -1,6 +1,10 @@
 import { Analytics } from '@vercel/analytics/next'
+import { Bevan, DM_Sans } from 'next/font/google'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+
+const bevan = Bevan({ subsets: ['latin'], weight: '400', variable: '--font-bevan' })
+const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-dm-sans' })
 
 export const metadata: Metadata = {
   title: 'La Comanda | Carta digital',
@@ -39,7 +43,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" className="bg-background">
+    <html lang="es" className={`bg-background ${bevan.variable} ${dmSans.variable}`}>
       <body className="antialiased">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
