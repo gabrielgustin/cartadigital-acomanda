@@ -26,8 +26,8 @@
   --foreground: oklch(0.21 0.025 35);
   --card: oklch(0.995 0.006 78);
   --card-foreground: oklch(0.21 0.025 35);
-  --primary: oklch(0.48 0.14 32);
-  --primary-foreground: oklch(0.98 0.01 78);
+  --primary: #43281c;
+  --primary-foreground: #fffaf4;
   --muted: oklch(0.93 0.018 78);
   --muted-foreground: oklch(0.48 0.025 42);
   --border: oklch(0.87 0.025 65);
@@ -42,7 +42,7 @@
   body { @apply bg-background text-foreground font-sans; }
 }
 
-.hero-pattern { background-image: radial-gradient(circle at 1px 1px, oklch(0.48 0.14 32 / 0.1) 1px, transparent 0); background-size: 22px 22px; }
+.hero-pattern { background-image: radial-gradient(circle at 1px 1px, rgb(67 40 28 / 0.1) 1px, transparent 0); background-size: 22px 22px; }
 .scrollbar-hide { scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 ::selection { background: oklch(0.48 0.14 32 / 0.2); }

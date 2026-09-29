@@ -111,7 +111,7 @@ export default function Page() {
         </div>
         {filtered.length === 0 && <p className="py-20 text-center text-sm text-muted-foreground">No encontramos ese plato. Probá con otra palabra.</p>}
       </div>
-      <footer className="border-t border-border bg-card px-5 py-10 text-center"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logolacomanda-VNpRbPJh01Eae6IUkvUaEkNgdUZQTm.webp" alt="La Comanda" className="mx-auto h-24 w-24 rounded-full object-cover" /><p className="mt-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">Lo bueno se comparte</p></footer>
+      <footer className="border-t border-border bg-card px-5 py-10 text-center"><img src="/logo-la-comanda.svg" alt="La Comanda" className="mx-auto h-24 w-24 object-contain" /><p className="mt-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">Lo bueno se comparte</p></footer>
     </main>
   )
 }
