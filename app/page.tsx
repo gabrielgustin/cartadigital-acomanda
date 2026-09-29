@@ -82,29 +82,43 @@ export default function Page() {
     return () => observer.disconnect()
   }, [])
 
-  const navScrollFrame = useRef<number | null>(null)
+  const navAnimationFrame = useRef<number | null>(null)
 
   useEffect(() => {
-    if (navScrollFrame.current !== null) cancelAnimationFrame(navScrollFrame.current)
+    const nav = document.querySelector<HTMLElement>('nav[aria-label="Categorías del menú"]')
+    const activeLink = nav?.querySelector<HTMLAnchorElement>(`[data-category="${activeSection}"]`)
+    if (!nav || !activeLink) return
 
-    navScrollFrame.current = requestAnimationFrame(() => {
-      const nav = document.querySelector<HTMLElement>('nav[aria-label="Categorías del menú"]')
-      const activeLink = nav?.querySelector<HTMLAnchorElement>(`[data-category="${activeSection}"]`)
-      if (!nav || !activeLink) return
+    if (navAnimationFrame.current !== null) cancelAnimationFrame(navAnimationFrame.current)
 
-      const navRect = nav.getBoundingClientRect()
-      const linkRect = activeLink.getBoundingClientRect()
-      const navCenter = navRect.left + navRect.width / 2
-      const linkCenter = linkRect.left + linkRect.width / 2
-      const distance = linkCenter - navCenter
+    const navRect = nav.getBoundingClientRect()
+    const linkRect = activeLink.getBoundingClientRect()
+    const navCenter = navRect.left + navRect.width / 2
+    const linkCenter = linkRect.left + linkRect.width / 2
+    const distance = linkCenter - navCenter
 
-      if (Math.abs(distance) > 18) {
-        nav.scrollBy({ left: distance, behavior: 'smooth' })
-      }
-    })
+    if (Math.abs(distance) <= 18) return
+
+    // Custom eased scroll instead of native `behavior: 'smooth'`: a JS-driven
+    // animation can be cancelled instantly when the target changes mid-flight
+    // (fast scrolling through categories), while the browser's built-in smooth
+    // scroll queues/fights with itself and shows up as visible stutter.
+    const start = nav.scrollLeft
+    const target = Math.max(0, Math.min(start + distance, nav.scrollWidth - nav.clientWidth))
+    const change = target - start
+    const duration = 240
+    const startTime = performance.now()
+    const easeOutCubic = (t: number) => 1 - (1 - t) ** 3
+
+    const step = (now: number) => {
+      const elapsed = Math.min((now - startTime) / duration, 1)
+      nav.scrollLeft = start + change * easeOutCubic(elapsed)
+      if (elapsed < 1) navAnimationFrame.current = requestAnimationFrame(step)
+    }
+    navAnimationFrame.current = requestAnimationFrame(step)
 
     return () => {
-      if (navScrollFrame.current !== null) cancelAnimationFrame(navScrollFrame.current)
+      if (navAnimationFrame.current !== null) cancelAnimationFrame(navAnimationFrame.current)
     }
   }, [activeSection])
 
@@ -120,8 +134,8 @@ export default function Page() {
       </header>
 
       <div className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-md">
-        <nav className="scrollbar-hide mx-auto flex max-w-6xl gap-2 overflow-x-auto px-5 py-3" aria-label="Categorías del menú">
-          {sections.map(({ id, label, icon: Icon }) => <a key={id} data-category={id} href={`#${id}`} aria-current={activeSection === id ? 'true' : undefined} className={`flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all duration-300 ease-out ${activeSection === id ? '-translate-y-0.5 scale-[1.04] border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20' : 'translate-y-0 scale-100 border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
+        <nav className="scrollbar-hide mx-auto flex max-w-6xl gap-2 overflow-x-auto px-5 py-3" style={{ willChange: 'scroll-position', WebkitOverflowScrolling: 'touch' }} aria-label="Categorías del menú">
+          {sections.map(({ id, label, icon: Icon }) => <a key={id} data-category={id} href={`#${id}`} aria-current={activeSection === id ? 'true' : undefined} className={`flex shrink-0 transform-gpu items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold shadow-md transition-[transform,color,background-color,border-color] duration-200 ease-out will-change-transform ${activeSection === id ? '-translate-y-0.5 scale-[1.04] border-primary bg-primary text-primary-foreground shadow-primary/20' : 'translate-y-0 scale-100 border-border bg-card text-muted-foreground shadow-transparent hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
         </nav>
       </div>
 
@@ -132,7 +146,7 @@ export default function Page() {
         </div>
         {filtered.length === 0 && <p className="py-20 text-center text-sm text-muted-foreground">No encontramos ese plato. Probá con otra palabra.</p>}
       </div>
-      <footer className="border-t border-border bg-card px-5 py-10 text-center"><img src="/logo-la-comanda.svg" alt="La Comanda" className="mx-auto h-24 w-24 object-contain" /><p className="mt-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">Lo bueno se comparte</p></footer>
+      <footer className="border-t border-border bg-card px-5 py-10 text-center"><img src="/logo-la-comanda.svg" alt="La Comanda" className="mx-auto h-36 w-36 object-contain" /><p className="mt-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">Lo bueno se comparte</p></footer>
     </main>
   )
 }
