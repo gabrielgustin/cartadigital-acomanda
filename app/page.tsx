@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Search, Utensils, Wine, Beer, Salad, Pizza, Sandwich, Baby, ChevronRight } from 'lucide-react'
 
 const sections = [
@@ -61,9 +61,30 @@ export default function Page() {
     return () => observer.disconnect()
   }, [])
 
+  const navScrollFrame = useRef<number | null>(null)
+
   useEffect(() => {
-    const activeLink = document.querySelector<HTMLAnchorElement>(`[data-category="${activeSection}"]`)
-    activeLink?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    if (navScrollFrame.current !== null) cancelAnimationFrame(navScrollFrame.current)
+
+    navScrollFrame.current = requestAnimationFrame(() => {
+      const nav = document.querySelector<HTMLElement>('nav[aria-label="Categorías del menú"]')
+      const activeLink = nav?.querySelector<HTMLAnchorElement>(`[data-category="${activeSection}"]`)
+      if (!nav || !activeLink) return
+
+      const navRect = nav.getBoundingClientRect()
+      const linkRect = activeLink.getBoundingClientRect()
+      const navCenter = navRect.left + navRect.width / 2
+      const linkCenter = linkRect.left + linkRect.width / 2
+      const distance = linkCenter - navCenter
+
+      if (Math.abs(distance) > 18) {
+        nav.scrollBy({ left: distance, behavior: 'smooth' })
+      }
+    })
+
+    return () => {
+      if (navScrollFrame.current !== null) cancelAnimationFrame(navScrollFrame.current)
+    }
   }, [activeSection])
 
   const filtered = useMemo(() => menu.map(section => ({ ...section, items: section.items.filter(([name, description]) => `${name} ${description}`.toLowerCase().includes(query.toLowerCase())) })).filter(section => section.items.length), [query])
