@@ -154,10 +154,13 @@ export default function Page() {
   }, [])
 
   // On every category change (click or scroll-driven), resize/reposition the
-  // pill onto the new active link and animate nav.scrollLeft so that link
-  // ends up centered. The pill itself needs no per-frame updates during this
-  // animation — since it's a real child of the scrolling nav, it rides along
-  // with the scroll automatically.
+  // pill onto the new active link instantly — no eased/animated slide across
+  // the categories in between. An animated nav.scrollLeft made the pill look
+  // like it was "traveling" through every button on its way to the clicked
+  // one; jumping straight there reads as immediate and correct instead. This
+  // is fully independent of the free vertical page-scroll behavior, which
+  // still drives activeSection via the section-detector effect below and
+  // relies on native nav scrolling (no JS) to keep the pill glued to its link.
   useLayoutEffect(() => {
     const nav = navRef.current
     const activeLink = linkRefs.current[activeSection]
@@ -165,7 +168,10 @@ export default function Page() {
 
     setPillRect({ width: activeLink.offsetWidth, height: activeLink.offsetHeight, left: activeLink.offsetLeft })
 
-    if (navAnimationFrame.current !== null) cancelAnimationFrame(navAnimationFrame.current)
+    if (navAnimationFrame.current !== null) {
+      cancelAnimationFrame(navAnimationFrame.current)
+      navAnimationFrame.current = null
+    }
 
     const navRect = nav.getBoundingClientRect()
     const linkRect = activeLink.getBoundingClientRect()
@@ -173,30 +179,8 @@ export default function Page() {
     const linkCenter = linkRect.left + linkRect.width / 2
     const distance = linkCenter - navCenter
 
-    const start = nav.scrollLeft
-    const target = Math.max(0, Math.min(start + distance, nav.scrollWidth - nav.clientWidth))
-    const change = target - start
-
-    if (Math.abs(change) <= 1) return
-
-    // Custom eased scroll instead of native `behavior: 'smooth'`: a JS-driven
-    // animation can be cancelled instantly when the target changes mid-flight
-    // (fast scrolling through categories), while the browser's built-in smooth
-    // scroll queues/fights with itself and shows up as visible stutter.
-    const duration = 260
-    const startTime = performance.now()
-    const easeOutCubic = (t: number) => 1 - (1 - t) ** 3
-
-    const step = (now: number) => {
-      const elapsed = Math.min((now - startTime) / duration, 1)
-      nav.scrollLeft = start + change * easeOutCubic(elapsed)
-      if (elapsed < 1) navAnimationFrame.current = requestAnimationFrame(step)
-    }
-    navAnimationFrame.current = requestAnimationFrame(step)
-
-    return () => {
-      if (navAnimationFrame.current !== null) cancelAnimationFrame(navAnimationFrame.current)
-    }
+    const target = Math.max(0, Math.min(nav.scrollLeft + distance, nav.scrollWidth - nav.clientWidth))
+    nav.scrollLeft = target
   }, [activeSection])
 
   const filtered = useMemo(() => menu.map(section => ({ ...section, items: section.items.filter(([name, description]) => `${name} ${description}`.toLowerCase().includes(query.toLowerCase())) })).filter(section => section.items.length), [query])
