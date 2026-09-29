@@ -66,6 +66,14 @@ export default function Page() {
 
   const stickyRef = useRef<HTMLDivElement>(null)
 
+  // Shared with handleCategoryClick below: the click handler scrolls a
+  // section's top to exactly this offset from the sticky nav, so the
+  // detection line here must use the identical value. A mismatch means the
+  // section the user just clicked into lands a few px past the detection
+  // line, and the very next scroll-driven detection tick reverts the pill to
+  // the previous category right after the click set it correctly.
+  const sectionOffset = 12
+
   // Deterministic, position-based section detection instead of
   // IntersectionObserver. A sorted-by-boundingClientRect approach can flip
   // ordering between two overlapping entries mid-scroll (both technically
@@ -77,7 +85,7 @@ export default function Page() {
     const sectionEls = sections.map(({ id }) => document.getElementById(id)).filter((el): el is HTMLElement => Boolean(el))
     let ticking = false
 
-    const getLine = () => (stickyRef.current?.getBoundingClientRect().height ?? 0) + 12
+    const getLine = () => (stickyRef.current?.getBoundingClientRect().height ?? 0) + sectionOffset
 
     const update = () => {
       ticking = false
@@ -109,19 +117,23 @@ export default function Page() {
   const navRef = useRef<HTMLElement>(null)
   const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({})
   const navAnimationFrame = useRef<number | null>(null)
-  const [pillSize, setPillSize] = useState({ width: 0, height: 0 })
-  const [pillX, setPillX] = useState(0)
+  const [pillRect, setPillRect] = useState({ width: 0, height: 0, left: 0 })
   const activeSectionRef = useRef(activeSection)
 
   useEffect(() => {
     activeSectionRef.current = activeSection
   }, [activeSection])
 
-  // The pill's size/position depend on the active link's real layout metrics
-  // (offsetWidth/offsetHeight/offsetLeft), which can shift after mount once
-  // the custom fonts finish loading (FOUT) or on window resize. Re-sync the
-  // pill instantly (no scroll animation) whenever that happens, independent
-  // of the category-change effect below which only fires on navigation.
+  // The pill now lives INSIDE <nav> as a normal absolutely-positioned child,
+  // sized and placed with the active link's own offsetLeft/offsetWidth (both
+  // measured relative to nav's own padding box, since nav is `position:
+  // relative`). Because its containing block is the scrollable element
+  // itself, the browser moves it together with the links for free whenever
+  // the user drags/swipes the nav — no JS has to chase the scroll position
+  // frame by frame, which is what caused the visible trembling before.
+  // This effect only re-measures the pill (size/left) when the active link's
+  // real layout metrics can change independently of navigation: after custom
+  // fonts finish loading (FOUT) or on resize.
   useLayoutEffect(() => {
     const nav = navRef.current
     if (!nav) return
@@ -129,8 +141,7 @@ export default function Page() {
     const syncPillInstant = () => {
       const activeLink = linkRefs.current[activeSectionRef.current]
       if (!activeLink) return
-      setPillSize({ width: activeLink.offsetWidth, height: activeLink.offsetHeight })
-      setPillX(activeLink.offsetLeft + activeLink.offsetWidth / 2 - nav.scrollLeft)
+      setPillRect({ width: activeLink.offsetWidth, height: activeLink.offsetHeight, left: activeLink.offsetLeft })
     }
 
     syncPillInstant()
@@ -139,50 +150,22 @@ export default function Page() {
     const resizeObserver = new ResizeObserver(syncPillInstant)
     resizeObserver.observe(nav)
 
-    // Keep the pill glued to its link while the user freely drags/swipes the
-    // nav's own horizontal scroll (independent from the page scroll, which is
-    // what actually changes the active section). Without this, dragging the
-    // nav slides the links underneath a pill whose position was last computed
-    // before the drag, so it visibly detaches and lags behind instead of
-    // traveling together with its link.
-    let scrollTicking = false
-    const onNavScroll = () => {
-      if (scrollTicking) return
-      scrollTicking = true
-      requestAnimationFrame(() => {
-        scrollTicking = false
-        syncPillInstant()
-      })
-    }
-    nav.addEventListener('scroll', onNavScroll, { passive: true })
-
-    return () => {
-      resizeObserver.disconnect()
-      nav.removeEventListener('scroll', onNavScroll)
-    }
+    return () => resizeObserver.disconnect()
   }, [])
 
-  // The filled pill is a fixed overlay, not part of the scrolling row: the
-  // category links slide underneath it. We animate the nav's scrollLeft so
-  // the active link ends up centered, and track the pill's horizontal
-  // position from the link's real (scroll-adjusted) location every frame
-  // rather than pinning it to the nav's geometric center. Edge items (the
-  // first/last category) can't scroll far enough to reach true center — the
-  // scrollLeft clamps at 0 or max — so a center-pinned pill would float in
-  // empty space, disconnected from its link. Following the link's actual
-  // position keeps the pill glued to it in every case.
+  // On every category change (click or scroll-driven), resize/reposition the
+  // pill onto the new active link and animate nav.scrollLeft so that link
+  // ends up centered. The pill itself needs no per-frame updates during this
+  // animation — since it's a real child of the scrolling nav, it rides along
+  // with the scroll automatically.
   useLayoutEffect(() => {
     const nav = navRef.current
     const activeLink = linkRefs.current[activeSection]
     if (!nav || !activeLink) return
 
-    setPillSize({ width: activeLink.offsetWidth, height: activeLink.offsetHeight })
+    setPillRect({ width: activeLink.offsetWidth, height: activeLink.offsetHeight, left: activeLink.offsetLeft })
 
     if (navAnimationFrame.current !== null) cancelAnimationFrame(navAnimationFrame.current)
-
-    const updatePillPosition = () => {
-      setPillX(activeLink.offsetLeft + activeLink.offsetWidth / 2 - nav.scrollLeft)
-    }
 
     const navRect = nav.getBoundingClientRect()
     const linkRect = activeLink.getBoundingClientRect()
@@ -194,10 +177,7 @@ export default function Page() {
     const target = Math.max(0, Math.min(start + distance, nav.scrollWidth - nav.clientWidth))
     const change = target - start
 
-    if (Math.abs(change) <= 1) {
-      updatePillPosition()
-      return
-    }
+    if (Math.abs(change) <= 1) return
 
     // Custom eased scroll instead of native `behavior: 'smooth'`: a JS-driven
     // animation can be cancelled instantly when the target changes mid-flight
@@ -210,7 +190,6 @@ export default function Page() {
     const step = (now: number) => {
       const elapsed = Math.min((now - startTime) / duration, 1)
       nav.scrollLeft = start + change * easeOutCubic(elapsed)
-      updatePillPosition()
       if (elapsed < 1) navAnimationFrame.current = requestAnimationFrame(step)
     }
     navAnimationFrame.current = requestAnimationFrame(step)
@@ -227,8 +206,13 @@ export default function Page() {
     const target = document.getElementById(sectionId)
     if (!target) return
 
+    // Paint the pill onto the clicked category immediately instead of
+    // waiting for the page-scroll section detector to catch up once the
+    // smooth scroll finishes — that lag is what made clicking feel broken.
+    setActiveSection(sectionId)
+
     const stickyHeight = stickyRef.current?.getBoundingClientRect().height ?? 0
-    const targetTop = target.getBoundingClientRect().top + window.scrollY - stickyHeight - 16
+    const targetTop = target.getBoundingClientRect().top + window.scrollY - stickyHeight - sectionOffset
     window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' })
   }
 
@@ -241,13 +225,13 @@ export default function Page() {
       </header>
 
       <div ref={stickyRef} className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-md">
-        <div className="relative mx-auto max-w-6xl">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 z-0 my-auto rounded-full bg-primary shadow-md shadow-primary/20 transition-[width,height] duration-200 ease-out"
-            style={{ width: pillSize.width, height: pillSize.height, left: pillX, transform: 'translateX(-50%)' }}
-          />
-          <nav ref={navRef} className="scrollbar-hide relative z-10 flex gap-2 overflow-x-auto px-5 py-3" style={{ willChange: 'scroll-position', WebkitOverflowScrolling: 'touch' }} aria-label="Categorías del menú">
+        <div className="mx-auto max-w-6xl">
+          <nav ref={navRef} className="scrollbar-hide relative flex gap-2 overflow-x-auto px-5 py-3" style={{ willChange: 'scroll-position', WebkitOverflowScrolling: 'touch' }} aria-label="Categorías del menú">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 z-0 my-auto rounded-full bg-primary shadow-md shadow-primary/20 transition-[width,height] duration-200 ease-out"
+              style={{ width: pillRect.width, height: pillRect.height, left: pillRect.left }}
+            />
             {sections.map(({ id, label, icon: Icon }) => <a key={id} ref={(el) => { linkRefs.current[id] = el }} data-category={id} href={`#${id}`} onClick={(event) => handleCategoryClick(event, id)} aria-current={activeSection === id ? 'true' : undefined} className={`relative z-10 flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors duration-200 ease-out ${activeSection === id ? 'border-transparent bg-transparent text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
           </nav>
         </div>
