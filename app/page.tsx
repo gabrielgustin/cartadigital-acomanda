@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Search, Utensils, Wine, Beer, Salad, Pizza, Sandwich, Baby, ChevronRight } from 'lucide-react'
 
 const sections = [
@@ -46,48 +46,64 @@ export default function Page() {
   const [query, setQuery] = useState('')
   const [activeSection, setActiveSection] = useState(sections[0].id)
 
-  const scrollDirection = useRef<'down' | 'up'>('down')
-  const lastScrollY = useRef(0)
+  const stickyRef = useRef<HTMLDivElement>(null)
 
+  // Deterministic, position-based section detection instead of
+  // IntersectionObserver. A sorted-by-boundingClientRect approach can flip
+  // ordering between two overlapping entries mid-scroll (both technically
+  // "intersecting" for a frame), which briefly commits to the wrong section
+  // and shows up as the highlight jumping back and forth. Checking each
+  // section's top against a fixed detection line, in document order, gives
+  // one stable answer per scroll position with no flicker.
   useEffect(() => {
-    lastScrollY.current = window.scrollY
-    const handleScroll = () => {
-      const y = window.scrollY
-      if (y > lastScrollY.current + 1) scrollDirection.current = 'down'
-      else if (y < lastScrollY.current - 1) scrollDirection.current = 'up'
-      lastScrollY.current = y
+    const sectionEls = sections.map(({ id }) => document.getElementById(id)).filter((el): el is HTMLElement => Boolean(el))
+    let ticking = false
+
+    const getLine = () => (stickyRef.current?.getBoundingClientRect().height ?? 0) + 12
+
+    const update = () => {
+      ticking = false
+      if (!sectionEls.length) return
+      const line = getLine()
+      let current = sectionEls[0].id
+      for (const el of sectionEls) {
+        if (el.getBoundingClientRect().top <= line) current = el.id
+        else break
+      }
+      setActiveSection((prev) => (prev === current ? prev : current))
     }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
+
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(update)
+    }
+
+    update()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [])
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((entry) => entry.isIntersecting)
-        if (!visible.length) return
-        visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-        // Scrolling down: commit to the furthest section already reached so the
-        // highlight only moves forward. Scrolling up: fall back to the topmost
-        // visible section so it correctly steps backward.
-        const next = scrollDirection.current === 'up' ? visible[0] : visible[visible.length - 1]
-        setActiveSection(next.target.id)
-      },
-      { rootMargin: '-120px 0px -55% 0px', threshold: [0.1, 0.35, 0.6] },
-    )
-    sections.forEach(({ id }) => {
-      const element = document.getElementById(id)
-      if (element) observer.observe(element)
-    })
-    return () => observer.disconnect()
-  }, [])
-
+  const navRef = useRef<HTMLElement>(null)
+  const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({})
   const navAnimationFrame = useRef<number | null>(null)
+  const [pillSize, setPillSize] = useState({ width: 0, height: 0 })
 
-  useEffect(() => {
-    const nav = document.querySelector<HTMLElement>('nav[aria-label="Categorías del menú"]')
-    const activeLink = nav?.querySelector<HTMLAnchorElement>(`[data-category="${activeSection}"]`)
+  // The centered "filled" pill is a fixed overlay, not part of the scrolling
+  // row: the category links slide underneath it while it stays put at the
+  // nav's horizontal center. We still animate the nav's scrollLeft so the
+  // active link ends up under that fixed point, and resize the overlay to
+  // match the active link's measured footprint.
+  useLayoutEffect(() => {
+    const nav = navRef.current
+    const activeLink = linkRefs.current[activeSection]
     if (!nav || !activeLink) return
+
+    setPillSize({ width: activeLink.offsetWidth, height: activeLink.offsetHeight })
 
     if (navAnimationFrame.current !== null) cancelAnimationFrame(navAnimationFrame.current)
 
@@ -97,7 +113,7 @@ export default function Page() {
     const linkCenter = linkRect.left + linkRect.width / 2
     const distance = linkCenter - navCenter
 
-    if (Math.abs(distance) <= 18) return
+    if (Math.abs(distance) <= 1) return
 
     // Custom eased scroll instead of native `behavior: 'smooth'`: a JS-driven
     // animation can be cancelled instantly when the target changes mid-flight
@@ -106,7 +122,7 @@ export default function Page() {
     const start = nav.scrollLeft
     const target = Math.max(0, Math.min(start + distance, nav.scrollWidth - nav.clientWidth))
     const change = target - start
-    const duration = 240
+    const duration = 260
     const startTime = performance.now()
     const easeOutCubic = (t: number) => 1 - (1 - t) ** 3
 
@@ -133,10 +149,17 @@ export default function Page() {
         </div>
       </header>
 
-      <div className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-md">
-        <nav className="scrollbar-hide mx-auto flex max-w-6xl gap-2 overflow-x-auto px-5 py-3" style={{ willChange: 'scroll-position', WebkitOverflowScrolling: 'touch' }} aria-label="Categorías del menú">
-          {sections.map(({ id, label, icon: Icon }) => <a key={id} data-category={id} href={`#${id}`} aria-current={activeSection === id ? 'true' : undefined} className={`flex shrink-0 transform-gpu items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold shadow-md transition-[transform,color,background-color,border-color] duration-200 ease-out will-change-transform ${activeSection === id ? '-translate-y-0.5 scale-[1.04] border-primary bg-primary text-primary-foreground shadow-primary/20' : 'translate-y-0 scale-100 border-border bg-card text-muted-foreground shadow-transparent hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
-        </nav>
+      <div ref={stickyRef} className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-md">
+        <div className="relative mx-auto max-w-6xl">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 z-0 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary shadow-md shadow-primary/20 transition-[width,height] duration-200 ease-out"
+            style={{ width: pillSize.width, height: pillSize.height }}
+          />
+          <nav ref={navRef} className="scrollbar-hide relative z-10 flex gap-2 overflow-x-auto px-5 py-3" style={{ willChange: 'scroll-position', WebkitOverflowScrolling: 'touch' }} aria-label="Categorías del menú">
+            {sections.map(({ id, label, icon: Icon }) => <a key={id} ref={(el) => { linkRefs.current[id] = el }} data-category={id} href={`#${id}`} aria-current={activeSection === id ? 'true' : undefined} className={`relative z-10 flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors duration-200 ease-out ${activeSection === id ? 'border-transparent bg-transparent text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
+          </nav>
+        </div>
       </div>
 
       <div className="mx-auto max-w-6xl px-5 pb-16 pt-8 sm:pt-12">
