@@ -42,6 +42,24 @@ const menu = [
   { id: 'infantil', title: 'Menú infantil', eyebrow: 'Para los más chicos', items: [['Hamburguesa con papas', 'Hamburguesa de carne, queso, lechuga y tomate opcional, papas fritas'], ['Milanesita de ternera', 'Milanesita de ternera y papas fritas']]},
 ]
 
+const fictitiousPrices: Record<string, number> = {
+  sandwiches: 8900,
+  burgers: 8200,
+  pizzas: 9800,
+  entradas: 5200,
+  principales: 14500,
+  mexicana: 7600,
+  bebidas: 4800,
+  cervezas: 4200,
+  infantil: 6500,
+}
+
+const formatPrice = (sectionId: string, itemIndex: number) => {
+  const base = fictitiousPrices[sectionId] ?? 5000
+  const step = sectionId === 'pizzas' ? 650 : sectionId === 'bebidas' ? 450 : 550
+  return `$${(base + itemIndex * step).toLocaleString('es-AR')}`
+}
+
 export default function Page() {
   const [query, setQuery] = useState('')
   const [activeSection, setActiveSection] = useState(sections[0].id)
@@ -187,10 +205,9 @@ export default function Page() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <header className="hero-pattern border-b border-border">
-        <div className="mx-auto flex max-w-6xl flex-col items-center px-5 pb-10 pt-8 text-center sm:pb-14 sm:pt-12">
-          <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logolacomanda-VNpRbPJh01Eae6IUkvUaEkNgdUZQTm.webp" alt="La Comanda" className="h-44 w-44 rounded-full object-cover sm:h-52 sm:w-52" />
-          <div className="mt-7 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"><Utensils className="h-4 w-4 text-primary" /> Hecho para disfrutar</div>
-        </div>
+<div className="mx-auto flex max-w-6xl flex-col items-center px-5 pb-6 pt-4 text-center sm:pb-8 sm:pt-6">
+  <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logolacomanda-VNpRbPJh01Eae6IUkvUaEkNgdUZQTm.webp" alt="La Comanda" className="h-44 w-44 rounded-full object-cover sm:h-52 sm:w-52" />
+  </div>
       </header>
 
       <div ref={stickyRef} className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-md">
@@ -209,7 +226,7 @@ export default function Page() {
       <div className="mx-auto max-w-6xl px-5 pb-16 pt-8 sm:pt-12">
         <div className="relative mx-auto mb-12 max-w-xl"><Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="¿Qué tenés ganas de comer?" className="h-12 w-full rounded-full border border-border bg-card pl-11 pr-5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" aria-label="Buscar platos" /></div>
         <div className="space-y-14">
-          {filtered.map(section => <section key={section.id} id={section.id} className="scroll-mt-24"><div className="mb-6 flex items-end justify-between border-b border-border pb-4"><div><p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-primary">{section.eyebrow}</p><h2 className="font-serif text-3xl uppercase tracking-wide text-foreground sm:text-4xl">{section.title}</h2></div></div><div className="grid gap-x-10 sm:grid-cols-2">{section.items.map(([name, description]) => <article key={name} className="group flex items-start justify-between gap-4 border-b border-border/70 py-5"><div><h3 className="font-serif text-base uppercase tracking-wide text-foreground group-hover:text-primary">{name}</h3><p className="mt-1.5 max-w-lg text-sm leading-6 text-muted-foreground">{description}</p></div><span className="shrink-0 pt-1 text-sm font-bold text-primary" aria-label="Precio a completar">—</span></article>)}</div></section>)}
+          {filtered.map(section => <section key={section.id} id={section.id} className="scroll-mt-24"><div className="mb-6 flex items-end justify-between border-b border-border pb-4"><div><p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-primary">{section.eyebrow}</p><h2 className="font-serif text-3xl uppercase tracking-wide text-foreground sm:text-4xl">{section.title}</h2></div></div><div className="grid gap-x-10 sm:grid-cols-2">{section.items.map(([name, description], itemIndex) => <article key={name} className="group flex items-start justify-between gap-4 border-b border-border/70 py-5"><div><h3 className="font-serif text-base uppercase tracking-wide text-foreground group-hover:text-primary">{name}</h3><p className="mt-1.5 max-w-lg text-sm leading-6 text-muted-foreground">{description}</p></div><span className="shrink-0 pt-1 text-sm font-bold text-primary" aria-label={`Precio ${formatPrice(section.id, itemIndex)}`}>{formatPrice(section.id, itemIndex)}</span></article>)}</div></section>)}
         </div>
         {filtered.length === 0 && <p className="py-20 text-center text-sm text-muted-foreground">No encontramos ese plato. Probá con otra palabra.</p>}
       </div>
