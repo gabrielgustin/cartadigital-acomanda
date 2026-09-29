@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Search, Utensils, Wine, Beer, Salad, Pizza, Sandwich, Baby, ChevronRight } from 'lucide-react'
 
 const sections = [
@@ -44,22 +44,37 @@ const menu = [
 
 export default function Page() {
   const [query, setQuery] = useState('')
+  const [activeSection, setActiveSection] = useState(sections[0].id)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)
+        if (visible[0]) setActiveSection(visible[0].target.id)
+      },
+      { rootMargin: '-120px 0px -55% 0px', threshold: [0.1, 0.35, 0.6] },
+    )
+    sections.forEach(({ id }) => {
+      const element = document.getElementById(id)
+      if (element) observer.observe(element)
+    })
+    return () => observer.disconnect()
+  }, [])
+
   const filtered = useMemo(() => menu.map(section => ({ ...section, items: section.items.filter(([name, description]) => `${name} ${description}`.toLowerCase().includes(query.toLowerCase())) })).filter(section => section.items.length), [query])
 
   return (
     <main className="min-h-screen bg-background text-foreground">
       <header className="hero-pattern border-b border-border">
         <div className="mx-auto flex max-w-6xl flex-col items-center px-5 pb-10 pt-8 text-center sm:pb-14 sm:pt-12">
-          <div className="mb-7 flex items-center gap-3 text-primary"><span className="h-px w-10 bg-primary/50" /><span className="text-xs font-bold uppercase tracking-[0.3em]">Carta digital</span><span className="h-px w-10 bg-primary/50" /></div>
-          <p className="font-serif text-4xl font-bold tracking-[0.16em] text-primary sm:text-6xl">LA COMANDA</p>
-          <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">Sabores honestos, cocina sin vueltas y una mesa para compartir.</p>
+          <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logolacomanda-VNpRbPJh01Eae6IUkvUaEkNgdUZQTm.webp" alt="La Comanda" className="h-44 w-44 rounded-full object-cover sm:h-52 sm:w-52" />
           <div className="mt-7 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"><Utensils className="h-4 w-4 text-primary" /> Hecho para disfrutar</div>
         </div>
       </header>
 
       <div className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-md">
         <nav className="scrollbar-hide mx-auto flex max-w-6xl gap-2 overflow-x-auto px-5 py-3" aria-label="Categorías del menú">
-          {sections.map(({ id, label, icon: Icon }) => <a key={id} href={`#${id}`} className="flex shrink-0 items-center gap-2 rounded-full border border-border bg-card px-3.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"><Icon className="h-3.5 w-3.5" />{label}</a>)}
+          {sections.map(({ id, label, icon: Icon }) => <a key={id} href={`#${id}`} aria-current={activeSection === id ? 'true' : undefined} className={`flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors ${activeSection === id ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
         </nav>
       </div>
 
@@ -70,7 +85,7 @@ export default function Page() {
         </div>
         {filtered.length === 0 && <p className="py-20 text-center text-sm text-muted-foreground">No encontramos ese plato. Probá con otra palabra.</p>}
       </div>
-      <footer className="border-t border-border bg-card px-5 py-10 text-center"><p className="font-serif text-2xl font-bold tracking-[0.12em] text-primary">LA COMANDA</p><p className="mt-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">Lo bueno se comparte</p></footer>
+      <footer className="border-t border-border bg-card px-5 py-10 text-center"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logolacomanda-VNpRbPJh01Eae6IUkvUaEkNgdUZQTm.webp" alt="La Comanda" className="mx-auto h-24 w-24 rounded-full object-cover" /><p className="mt-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">Lo bueno se comparte</p></footer>
     </main>
   )
 }
