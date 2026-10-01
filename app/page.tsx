@@ -268,7 +268,7 @@ export default function Page() {
 
       <div ref={stickyRef} className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-md">
         <div className="mx-auto max-w-6xl">
-          <nav ref={navRef} className="scrollbar-hide relative flex gap-2 overflow-x-auto px-5 py-3" style={{ willChange: 'scroll-position', WebkitOverflowScrolling: 'touch' }} aria-label="Categorías del menú">
+          <nav ref={navRef} className="scrollbar-hide relative flex min-h-16 gap-2 overflow-x-auto px-5 py-4 sm:min-h-14 sm:py-3" style={{ willChange: 'scroll-position', WebkitOverflowScrolling: 'touch' }} aria-label="Categorías del menú">
             <div
               key={activeSection}
               aria-hidden
