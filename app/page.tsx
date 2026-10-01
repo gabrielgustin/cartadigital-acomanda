@@ -74,6 +74,26 @@ export default function Page() {
   // the previous category right after the click set it correctly.
   const sectionOffset = 12
 
+  // While a click-initiated smooth scroll is running, the section detector is
+  // paused so the pill jumps straight to the clicked category instead of
+  // stepping through every section the page passes on the way. The lock is
+  // released once the page stops scrolling, or immediately on manual input.
+  const clickLock = useRef(false)
+  const clickLockTimer = useRef<number | undefined>(undefined)
+
+  const releaseClickLock = () => {
+    window.clearTimeout(clickLockTimer.current)
+    if (!clickLock.current) return
+    clickLock.current = false
+    window.dispatchEvent(new Event('scroll'))
+  }
+
+  const armClickLock = () => {
+    clickLock.current = true
+    window.clearTimeout(clickLockTimer.current)
+    clickLockTimer.current = window.setTimeout(releaseClickLock, 160)
+  }
+
   // Deterministic, position-based section detection instead of
   // IntersectionObserver. A sorted-by-boundingClientRect approach can flip
   // ordering between two overlapping entries mid-scroll (both technically
@@ -112,17 +132,30 @@ export default function Page() {
     }
 
     const onScroll = () => {
+      if (clickLock.current) {
+        armClickLock()
+        return
+      }
       if (ticking) return
       ticking = true
       requestAnimationFrame(update)
     }
 
+    const onManualInput = () => releaseClickLock()
+
     update()
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onScroll)
+    window.addEventListener('wheel', onManualInput, { passive: true })
+    window.addEventListener('touchstart', onManualInput, { passive: true })
+    window.addEventListener('keydown', onManualInput)
     return () => {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)
+      window.removeEventListener('wheel', onManualInput)
+      window.removeEventListener('touchstart', onManualInput)
+      window.removeEventListener('keydown', onManualInput)
+      window.clearTimeout(clickLockTimer.current)
     }
   }, [])
 
@@ -210,6 +243,7 @@ export default function Page() {
     // waiting for the page-scroll section detector to catch up once the
     // smooth scroll finishes — that lag is what made clicking feel broken.
     setActiveSection(sectionId)
+    armClickLock()
 
     const stickyHeight = stickyRef.current?.getBoundingClientRect().height ?? 0
     const targetTop = target.getBoundingClientRect().top + window.scrollY - stickyHeight - sectionOffset
