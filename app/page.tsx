@@ -228,11 +228,15 @@ export default function Page() {
         <div className="mx-auto max-w-6xl">
           <nav ref={navRef} className="scrollbar-hide relative flex gap-2 overflow-x-auto px-5 py-3" style={{ willChange: 'scroll-position', WebkitOverflowScrolling: 'touch' }} aria-label="Categorías del menú">
             <div
+              key={activeSection}
               aria-hidden
-              className="pointer-events-none absolute inset-y-0 z-0 my-auto rounded-full bg-primary shadow-md shadow-primary/20 transition-[width,height] duration-200 ease-out"
+              className="pointer-events-none absolute inset-y-0 z-0 my-auto"
               style={{ width: pillRect.width, height: pillRect.height, left: pillRect.left }}
-            />
-            {sections.map(({ id, label, icon: Icon }) => <a key={id} ref={(el) => { linkRefs.current[id] = el }} data-category={id} href={`#${id}`} onClick={(event) => handleCategoryClick(event, id)} aria-current={activeSection === id ? 'true' : undefined} className={`relative z-10 flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors duration-200 ease-out ${activeSection === id ? 'border-transparent bg-transparent text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
+            >
+              <span className="absolute inset-0 rounded-full border border-border bg-card" />
+              <span className="pill-paint absolute inset-0 rounded-full shadow-md shadow-primary/20" />
+            </div>
+            {sections.map(({ id, label, icon: Icon }) => <a key={id} ref={(el) => { linkRefs.current[id] = el }} data-category={id} href={`#${id}`} onClick={(event) => handleCategoryClick(event, id)} aria-current={activeSection === id ? 'true' : undefined} className={`relative z-10 flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors duration-300 ease-out ${activeSection === id ? 'delay-100 border-transparent bg-transparent text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
           </nav>
         </div>
       </div>
