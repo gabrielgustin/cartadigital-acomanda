@@ -56,8 +56,19 @@
   from { background-position: 100% 0; }
   to { background-position: 0% 0; }
 }
+.pill-paint-left {
+  animation: pill-wipe-left 420ms cubic-bezier(0.22, 1, 0.36, 1) both, pill-sheen-left 700ms ease-out both;
+}
+@keyframes pill-wipe-left {
+  from { clip-path: inset(0 0 0 100% round 9999px); }
+  to { clip-path: inset(0 0 0 0 round 9999px); }
+}
+@keyframes pill-sheen-left {
+  from { background-position: 0% 0; }
+  to { background-position: 100% 0; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .pill-paint { animation: none; }
+  .pill-paint, .pill-paint-left { animation: none; }
 }
 .scrollbar-hide { scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }

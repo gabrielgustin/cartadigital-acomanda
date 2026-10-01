@@ -165,6 +165,14 @@ export default function Page() {
   const [pillRect, setPillRect] = useState({ width: 0, height: 0, left: 0 })
   const activeSectionRef = useRef(activeSection)
 
+  const activeIndex = sections.findIndex(({ id }) => id === activeSection)
+  const previousIndexRef = useRef(activeIndex)
+  const paintDirectionRef = useRef<'right' | 'left'>('right')
+  if (activeIndex !== previousIndexRef.current) {
+    paintDirectionRef.current = activeIndex > previousIndexRef.current ? 'right' : 'left'
+    previousIndexRef.current = activeIndex
+  }
+
   useEffect(() => {
     activeSectionRef.current = activeSection
   }, [activeSection])
@@ -268,7 +276,7 @@ export default function Page() {
               style={{ width: pillRect.width, height: pillRect.height, left: pillRect.left }}
             >
               <span className="absolute inset-0 rounded-full border border-border bg-card" />
-              <span className="pill-paint absolute inset-0 rounded-full shadow-md shadow-primary/20" />
+              <span className={`pill-paint ${paintDirectionRef.current === 'left' ? 'pill-paint-left' : ''} absolute inset-0 rounded-full shadow-md shadow-primary/20`} />
             </div>
             {sections.map(({ id, label, icon: Icon }) => <a key={id} ref={(el) => { linkRefs.current[id] = el }} data-category={id} href={`#${id}`} onClick={(event) => handleCategoryClick(event, id)} aria-current={activeSection === id ? 'true' : undefined} className={`relative z-10 flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors duration-300 ease-out ${activeSection === id ? 'delay-100 border-transparent bg-transparent text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}><Icon className="h-3.5 w-3.5" />{label}</a>)}
           </nav>
