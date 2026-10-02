@@ -42,6 +42,18 @@ const menu = [
   { id: 'infantil', title: 'Menú infantil', eyebrow: 'Para los más chicos', items: [['Hamburguesa con papas', 'Hamburguesa de carne, queso, lechuga y tomate opcional, papas fritas'], ['Milanesita de ternera', 'Milanesita de ternera y papas fritas']]},
 ]
 
+const categoryImages: Record<string, string> = {
+  sandwiches: '/menu/sandwiches.png',
+  burgers: '/menu/burgers.png',
+  pizzas: '/menu/pizzas.png',
+  entradas: '/menu/entradas.png',
+  principales: '/menu/principales.png',
+  mexicana: '/menu/mexicana.png',
+  bebidas: '/menu/bebidas.png',
+  cervezas: '/menu/cervezas.png',
+  infantil: '/menu/infantil.png',
+}
+
 const fictitiousPrices: Record<string, number> = {
   sandwiches: 8900,
   burgers: 8200,
@@ -286,7 +298,7 @@ export default function Page() {
       <div className="mx-auto max-w-6xl px-5 pb-16 pt-8 sm:pt-12">
         <div className="relative mx-auto mb-12 max-w-xl"><Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="¿Qué tenés ganas de comer?" className="h-12 w-full rounded-full border border-border bg-card pl-11 pr-5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" aria-label="Buscar platos" /></div>
         <div className="space-y-14">
-          {filtered.map(section => <section key={section.id} id={section.id} className="scroll-mt-24"><div className="mb-6 flex items-end justify-between border-b border-border pb-4"><div><p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-primary">{section.eyebrow}</p><h2 className="font-serif text-3xl uppercase tracking-wide text-foreground sm:text-4xl">{section.title}</h2></div></div><div className="grid gap-x-10 sm:grid-cols-2">{section.items.map(([name, description], itemIndex) => <article key={name} className="group flex items-start justify-between gap-4 border-b border-border/70 py-5"><div><h3 className="font-serif text-base uppercase tracking-wide text-foreground group-hover:text-primary">{name}</h3><p className="mt-1.5 max-w-lg text-sm leading-6 text-muted-foreground">{description}</p></div><span className="shrink-0 pt-1 font-serif text-sm font-bold uppercase tracking-wide text-primary" aria-label={`Precio ${formatPrice(section.id, itemIndex)}`}>{formatPrice(section.id, itemIndex)}</span></article>)}</div></section>)}
+          {filtered.map(section => <section key={section.id} id={section.id} className="scroll-mt-24"><div className="mb-6 flex items-end justify-between border-b border-border pb-4"><div><p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-primary">{section.eyebrow}</p><h2 className="font-serif text-3xl uppercase tracking-wide text-foreground sm:text-4xl">{section.title}</h2></div></div><div className="grid gap-4 sm:grid-cols-2">{section.items.map(([name, description], itemIndex) => <article key={name} className="group flex items-center gap-4 border-b border-border/70 py-4"><img src={categoryImages[section.id]} alt={`${name}, ${section.title}`} className="h-20 w-20 shrink-0 rounded-xl object-cover ring-1 ring-border transition duration-300 group-hover:scale-[1.03] group-hover:ring-primary/60 sm:h-24 sm:w-24" loading="lazy" /><div className="min-w-0 flex-1"><h3 className="font-serif text-base uppercase tracking-wide text-foreground group-hover:text-primary">{name}</h3><p className="mt-1.5 max-w-lg text-sm leading-6 text-muted-foreground">{description}</p></div><span className="shrink-0 self-start pt-1 font-serif text-sm font-bold uppercase tracking-wide text-primary" aria-label={`Precio ${formatPrice(section.id, itemIndex)}`}>{formatPrice(section.id, itemIndex)}</span></article>)}</div></section>)}
         </div>
         {filtered.length === 0 && <p className="py-20 text-center text-sm text-muted-foreground">No encontramos ese plato. Probá con otra palabra.</p>}
       </div>
