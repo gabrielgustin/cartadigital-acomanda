@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Search, Utensils, Wine, Beer, Salad, Pizza, Sandwich, Baby } from 'lucide-react'
+import { Search, Utensils, Wine, Beer, Salad, Pizza, Sandwich, Baby, X } from 'lucide-react' 
 
 const sections = [
   { id: 'sandwiches', label: 'Sandwiches', icon: Sandwich },
@@ -75,6 +75,20 @@ const formatPrice = (sectionId: string, itemIndex: number) => {
 export default function Page() {
   const [query, setQuery] = useState('')
   const [activeSection, setActiveSection] = useState(sections[0].id)
+  const [selectedProduct, setSelectedProduct] = useState<{ name: string; description: string; sectionId: string; sectionTitle: string; price: string } | null>(null)
+
+  useEffect(() => {
+    if (!selectedProduct) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSelectedProduct(null)
+    }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [selectedProduct])
 
   const stickyRef = useRef<HTMLDivElement>(null)
 
@@ -298,10 +312,11 @@ export default function Page() {
       <div className="mx-auto max-w-6xl px-5 pb-16 pt-8 sm:pt-12">
         <div className="relative mx-auto mb-12 max-w-xl"><Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="¿Qué tenés ganas de comer?" className="h-12 w-full rounded-full border border-border bg-card pl-11 pr-5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" aria-label="Buscar platos" /></div>
         <div className="space-y-14">
-          {filtered.map(section => <section key={section.id} id={section.id} className="scroll-mt-24"><div className="mb-6 flex items-end justify-between border-b border-border pb-4"><div><p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-primary">{section.eyebrow}</p><h2 className="font-serif text-3xl uppercase tracking-wide text-foreground sm:text-4xl">{section.title}</h2></div></div><div className="grid gap-4 sm:grid-cols-2">{section.items.map(([name, description], itemIndex) => <article key={name} className="group flex items-center gap-4 border-b border-border/70 py-4"><img src={categoryImages[section.id]} alt={`${name}, ${section.title}`} className="h-20 w-20 shrink-0 rounded-xl object-cover ring-1 ring-border transition duration-300 group-hover:scale-[1.03] group-hover:ring-primary/60 sm:h-24 sm:w-24" loading="lazy" /><div className="min-w-0 flex-1"><h3 className="font-serif text-base uppercase tracking-wide text-foreground group-hover:text-primary">{name}</h3><p className="mt-1.5 max-w-lg text-sm leading-6 text-muted-foreground">{description}</p></div><span className="shrink-0 self-start pt-1 font-serif text-sm font-bold uppercase tracking-wide text-primary" aria-label={`Precio ${formatPrice(section.id, itemIndex)}`}>{formatPrice(section.id, itemIndex)}</span></article>)}</div></section>)}
+          {filtered.map(section => <section key={section.id} id={section.id} className="scroll-mt-24"><div className="mb-6 flex items-end justify-between border-b border-border pb-4"><div><p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-primary">{section.eyebrow}</p><h2 className="font-serif text-3xl uppercase tracking-wide text-foreground sm:text-4xl">{section.title}</h2></div></div><div className="grid gap-4 sm:grid-cols-2">{section.items.map(([name, description], itemIndex) => <article key={name} role="button" tabIndex={0} onClick={() => setSelectedProduct({ name, description, sectionId: section.id, sectionTitle: section.title, price: formatPrice(section.id, itemIndex) })} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSelectedProduct({ name, description, sectionId: section.id, sectionTitle: section.title, price: formatPrice(section.id, itemIndex) }) } }} className="group flex cursor-pointer items-center gap-4 border-b border-border/70 py-4 outline-none transition hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-primary/50"><img src={categoryImages[section.id]} alt={`${name}, ${section.title}`} className="h-20 w-20 shrink-0 rounded-xl object-cover ring-1 ring-border transition duration-300 group-hover:scale-[1.03] group-hover:ring-primary/60 sm:h-24 sm:w-24" loading="lazy" /><div className="min-w-0 flex-1"><h3 className="font-serif text-base uppercase tracking-wide text-foreground group-hover:text-primary">{name}</h3><p className="mt-1.5 max-w-lg text-sm leading-6 text-muted-foreground">{description}</p></div><span className="shrink-0 self-start pt-1 font-serif text-sm font-bold uppercase tracking-wide text-primary" aria-label={`Precio ${formatPrice(section.id, itemIndex)}`}>{formatPrice(section.id, itemIndex)}</span></article>)}</div></section>)}
         </div>
         {filtered.length === 0 && <p className="py-20 text-center text-sm text-muted-foreground">No encontramos ese plato. Probá con otra palabra.</p>}
       </div>
+      {selectedProduct && <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 p-0 backdrop-blur-sm sm:items-center sm:p-5" role="presentation" onClick={() => setSelectedProduct(null)}><div role="dialog" aria-modal="true" aria-labelledby="product-dialog-title" onClick={(event) => event.stopPropagation()} className="w-full max-w-md overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"><div className="relative"><img src={categoryImages[selectedProduct.sectionId]} alt="" className="h-52 w-full object-cover sm:h-60" /><button type="button" onClick={() => setSelectedProduct(null)} aria-label="Cerrar detalles" className="absolute right-4 top-4 rounded-full bg-card/90 p-2 text-foreground shadow-md transition hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><X className="h-5 w-5" /></button></div><div className="space-y-3 p-6"><p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-primary">{selectedProduct.sectionTitle}</p><div className="flex items-start justify-between gap-4"><h2 id="product-dialog-title" className="font-serif text-2xl uppercase tracking-wide text-foreground">{selectedProduct.name}</h2><span className="shrink-0 pt-1 font-serif text-lg font-bold text-primary">{selectedProduct.price}</span></div><p className="text-sm leading-6 text-muted-foreground">{selectedProduct.description}</p><p className="pt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">Tocá afuera para cerrar</p></div></div></div>}
       <footer className="border-t border-border bg-card px-5 py-6 text-center"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/n-lVCemyWt8jQsqth5SSB8kXA3IgLsyn.png" alt="Carta La Comanda Tejeda" className="mx-auto h-36 w-36 object-contain" /></footer>
     </main>
   )
