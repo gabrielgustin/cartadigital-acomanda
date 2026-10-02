@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Search, Utensils, Wine, Beer, Salad, Pizza, Sandwich, Baby, X } from 'lucide-react' 
 
 const sections = [
@@ -77,10 +78,21 @@ export default function Page() {
   const [activeSection, setActiveSection] = useState(sections[0].id)
   const [selectedProduct, setSelectedProduct] = useState<{ name: string; description: string; sectionId: string; sectionTitle: string; price: string } | null>(null)
 
+  const [isClosing, setIsClosing] = useState(false)
+
+  const closeProduct = () => {
+    if (isClosing) return
+    setIsClosing(true)
+    window.setTimeout(() => {
+      setSelectedProduct(null)
+      setIsClosing(false)
+    }, 220)
+  }
+
   useEffect(() => {
     if (!selectedProduct) return
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setSelectedProduct(null)
+      if (event.key === 'Escape') closeProduct()
     }
     document.body.style.overflow = 'hidden'
     window.addEventListener('keydown', onKeyDown)
@@ -316,7 +328,7 @@ export default function Page() {
         </div>
         {filtered.length === 0 && <p className="py-20 text-center text-sm text-muted-foreground">No encontramos ese plato. Probá con otra palabra.</p>}
       </div>
-      {selectedProduct && <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/50 p-0 backdrop-blur-sm sm:items-center sm:p-5" role="presentation" onClick={() => setSelectedProduct(null)}><div role="dialog" aria-modal="true" aria-labelledby="product-dialog-title" onClick={(event) => event.stopPropagation()} className="w-full max-w-md overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"><div className="relative"><img src={categoryImages[selectedProduct.sectionId]} alt="" className="h-52 w-full object-cover sm:h-60" /><button type="button" onClick={() => setSelectedProduct(null)} aria-label="Cerrar detalles" className="absolute right-4 top-4 rounded-full bg-card/90 p-2 text-foreground shadow-md transition hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><X className="h-5 w-5" /></button></div><div className="space-y-3 p-6"><p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-primary">{selectedProduct.sectionTitle}</p><div className="flex items-start justify-between gap-4"><h2 id="product-dialog-title" className="font-serif text-2xl uppercase tracking-wide text-foreground">{selectedProduct.name}</h2><span className="shrink-0 pt-1 font-serif text-lg font-bold text-primary">{selectedProduct.price}</span></div><p className="text-sm leading-6 text-muted-foreground">{selectedProduct.description}</p><p className="pt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">Tocá afuera para cerrar</p></div></div></div>}
+      {selectedProduct && createPortal(<div className={`product-overlay ${isClosing ? 'product-overlay-out' : ''} fixed inset-0 z-[100] flex items-end justify-center bg-foreground/60 p-0 backdrop-blur-sm sm:items-center sm:p-5`} role="presentation" onClick={closeProduct}><div role="dialog" aria-modal="true" aria-labelledby="product-dialog-title" onClick={(event) => event.stopPropagation()} className={`product-sheet ${isClosing ? 'product-sheet-out' : ''} max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl`}><div className="relative"><img src={categoryImages[selectedProduct.sectionId]} alt="" className="h-52 w-full object-cover sm:h-60" /><button type="button" onClick={closeProduct} aria-label="Cerrar detalles" className="absolute right-4 top-4 rounded-full bg-card/90 p-2 text-foreground shadow-md transition hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><X className="h-5 w-5" /></button></div><div className="space-y-3 p-6"><p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-primary">{selectedProduct.sectionTitle}</p><div className="flex items-start justify-between gap-4"><h2 id="product-dialog-title" className="font-serif text-2xl uppercase tracking-wide text-foreground">{selectedProduct.name}</h2><span className="shrink-0 pt-1 font-serif text-lg font-bold text-primary">{selectedProduct.price}</span></div><p className="text-sm leading-6 text-muted-foreground">{selectedProduct.description}</p><p className="pt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">Tocá afuera para cerrar</p></div></div></div>, document.body)}
       <footer className="border-t border-border bg-card px-5 py-6 text-center"><img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/n-lVCemyWt8jQsqth5SSB8kXA3IgLsyn.png" alt="Carta La Comanda Tejeda" className="mx-auto h-36 w-36 object-contain" /></footer>
     </main>
   )
