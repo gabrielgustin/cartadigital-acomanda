@@ -1,0 +1,81 @@
+'use client'
+
+import Image from 'next/image'
+import { X } from 'lucide-react'
+import { useLanguage } from '@/components/language-provider'
+import { Modal } from '@/components/modal'
+import { useOrder } from '@/components/order-provider'
+import { QuantityStepper } from '@/components/quantity-stepper'
+import { formatPrice } from '@/lib/format'
+import type { MenuItem, MenuSection } from '@/lib/menu-data'
+
+interface ProductDialogProps {
+  item: MenuItem
+  section: MenuSection
+  onClose: () => void
+}
+
+export function ProductDialog({ item, section, onClose }: ProductDialogProps) {
+  const { lang, t } = useLanguage()
+  const { quantities, add, remove } = useOrder()
+  const quantity = quantities[item.id] ?? 0
+  const name = item.name[lang]
+
+  return (
+    <Modal labelledBy="product-dialog-title" onClose={onClose}>
+      {(close) => (
+        <>
+          <div className="relative h-52 sm:h-60">
+            <Image src={section.image} alt="" fill sizes="448px" className="object-cover" />
+            <button
+              type="button"
+              onClick={close}
+              aria-label={t.closeDetails}
+              className="absolute right-4 top-4 rounded-full bg-card/90 p-2 text-foreground shadow-md transition hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <X className="h-5 w-5" aria-hidden />
+            </button>
+          </div>
+          <div className="space-y-3 p-6">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-primary">{section.title[lang]}</p>
+            <div className="flex items-start justify-between gap-4">
+              <h2 id="product-dialog-title" className="font-serif text-2xl uppercase tracking-wide text-foreground">
+                {name}
+              </h2>
+              <span className="shrink-0 pt-1 font-serif text-lg font-bold text-primary">
+                <span className="sr-only">{t.price} </span>
+                {formatPrice(item.price)}
+              </span>
+            </div>
+            <p className="text-sm leading-6 text-muted-foreground">{item.description[lang]}</p>
+            {item.tags.length > 0 && (
+              <ul className="flex flex-wrap gap-1.5">
+                {item.tags.map((tag) => (
+                  <li key={tag} className="rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    {t.tags[tag]}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex items-center justify-between gap-4 pt-2">
+              {quantity === 0 ? (
+                <button
+                  type="button"
+                  onClick={() => add(item.id)}
+                  className="h-11 w-full rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  {t.addToOrder}
+                </button>
+              ) : (
+                <>
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t.inYourOrder}</span>
+                  <QuantityStepper name={name} quantity={quantity} onAdd={() => add(item.id)} onRemove={() => remove(item.id)} />
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </Modal>
+  )
+}

@@ -4,7 +4,7 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    unoptimized: true,
+    remotePatterns: [new URL('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/**')],
   },
 }
 
