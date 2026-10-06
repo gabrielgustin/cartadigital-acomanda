@@ -57,7 +57,7 @@ export function MenuExperience() {
         </div>
       </header>
 
-      <div ref={stickyRef} className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-md">
+      <div ref={stickyRef} className="sticky top-0 z-20 border-b border-border bg-background">
         <div className="mx-auto max-w-6xl">
           <CategoryNav sections={filtered.map((section) => ({ id: section.id, label: section.label[lang] }))} activeSection={activeSection} onSelect={selectSection} />
         </div>
