@@ -1,11 +1,9 @@
-import type { Lang, Tag } from '@/lib/menu-data'
+import type { Lang } from '@/lib/menu-data'
 
 const es = {
   searchPlaceholder: '¿Qué tenés ganas de comer?',
   searchLabel: 'Buscar platos',
   categoriesLabel: 'Categorías del menú',
-  filtersLabel: 'Filtrar por etiqueta',
-  tags: { vegetariano: 'Vegetariano', sinTacc: 'Sin TACC', picante: 'Picante' } satisfies Record<Tag, string>,
   noResults: 'No encontramos platos con esa búsqueda.',
   clearFilters: 'Limpiar filtros',
   resultsCount: (count: number) => (count === 1 ? '1 plato encontrado' : `${count} platos encontrados`),
@@ -36,8 +34,6 @@ const en: Strings = {
   searchPlaceholder: 'What are you in the mood for?',
   searchLabel: 'Search dishes',
   categoriesLabel: 'Menu categories',
-  filtersLabel: 'Filter by tag',
-  tags: { vegetariano: 'Vegetarian', sinTacc: 'Gluten-free', picante: 'Spicy' },
   noResults: 'No dishes match your search.',
   clearFilters: 'Clear filters',
   resultsCount: (count) => (count === 1 ? '1 dish found' : `${count} dishes found`),

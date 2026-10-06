@@ -11,7 +11,7 @@ import { OrderBar } from '@/components/order-sheet'
 import { useOrder } from '@/components/order-provider'
 import { ProductDialog } from '@/components/product-dialog'
 import { normalizeText } from '@/lib/format'
-import { availableTags, menu, type MenuItem, type Tag } from '@/lib/menu-data'
+import { menu, type MenuItem } from '@/lib/menu-data'
 import { useActiveSection } from '@/lib/use-active-section'
 
 const LOGO_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logolacomanda-VNpRbPJh01Eae6IUkvUaEkNgdUZQTm.webp'
@@ -21,7 +21,6 @@ export function MenuExperience() {
   const { lang, t } = useLanguage()
   const { count } = useOrder()
   const [query, setQuery] = useState('')
-  const [activeTags, setActiveTags] = useState<Tag[]>([])
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null)
   const stickyRef = useRef<HTMLDivElement>(null)
 
@@ -32,12 +31,11 @@ export function MenuExperience() {
         ...section,
         items: section.items.filter(
           (item) =>
-            activeTags.every((tag) => item.tags.includes(tag)) &&
             normalizeText(`${item.name[lang]} ${item.description[lang]}`).includes(needle),
         ),
       }))
       .filter((section) => section.items.length > 0)
-  }, [query, activeTags, lang])
+  }, [query, lang])
 
   const { activeSection, selectSection } = useActiveSection(
     filtered.map((section) => section.id),
@@ -45,14 +43,10 @@ export function MenuExperience() {
   )
 
   const resultCount = filtered.reduce((sum, section) => sum + section.items.length, 0)
-  const isFiltering = query.trim() !== '' || activeTags.length > 0
+  const isFiltering = query.trim() !== ''
   const selectedSection = selectedItem ? menu.find((section) => section.id === selectedItem.sectionId) : undefined
 
-  const toggleTag = (tag: Tag) => setActiveTags((current) => (current.includes(tag) ? current.filter((entry) => entry !== tag) : [...current, tag]))
-  const clearFilters = () => {
-    setQuery('')
-    setActiveTags([])
-  }
+  const clearFilters = () => setQuery('')
 
   return (
     <main className={`min-h-screen bg-background text-foreground ${count > 0 ? 'pb-24' : ''}`}>
@@ -82,24 +76,6 @@ export function MenuExperience() {
               aria-label={t.searchLabel}
             />
           </div>
-          {availableTags.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-2" role="group" aria-label={t.filtersLabel}>
-              {availableTags.map((tag) => {
-                const active = activeTags.includes(tag)
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => toggleTag(tag)}
-                    aria-pressed={active}
-                    className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${active ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}
-                  >
-                    {t.tags[tag]}
-                  </button>
-                )
-              })}
-            </div>
-          )}
           <p className="sr-only" aria-live="polite">
             {isFiltering ? t.resultsCount(resultCount) : ''}
           </p>

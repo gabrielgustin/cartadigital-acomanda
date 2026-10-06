@@ -40,15 +40,6 @@ export function MenuItemCard({ item, image, onOpen }: MenuItemCardProps) {
           </button>
         </h3>
         <p className="mt-1.5 max-w-lg text-sm leading-6 text-muted-foreground">{item.description[lang]}</p>
-        {item.tags.length > 0 && (
-          <ul className="mt-2 flex flex-wrap gap-1.5">
-            {item.tags.map((tag) => (
-              <li key={tag} className="rounded-full border border-border bg-card px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
-                {t.tags[tag]}
-              </li>
-            ))}
-          </ul>
-        )}
         <div className="mt-3 flex items-center justify-between gap-3">
           <span className="font-serif text-base font-bold tracking-wide text-primary">
             <span className="sr-only">{t.price} </span>

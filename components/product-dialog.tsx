@@ -48,15 +48,6 @@ export function ProductDialog({ item, section, onClose }: ProductDialogProps) {
               </span>
             </div>
             <p className="text-sm leading-6 text-muted-foreground">{item.description[lang]}</p>
-            {item.tags.length > 0 && (
-              <ul className="flex flex-wrap gap-1.5">
-                {item.tags.map((tag) => (
-                  <li key={tag} className="rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
-                    {t.tags[tag]}
-                  </li>
-                ))}
-              </ul>
-            )}
             <div className="flex items-center justify-between gap-4 pt-2">
               {quantity === 0 ? (
                 <button

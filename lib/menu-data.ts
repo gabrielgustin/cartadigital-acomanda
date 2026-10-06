@@ -1,6 +1,5 @@
 export type Lang = 'es' | 'en'
 export type Localized = Record<Lang, string>
-export type Tag = 'vegetariano' | 'sinTacc' | 'picante'
 
 export interface MenuItem {
   id: string
@@ -8,7 +7,6 @@ export interface MenuItem {
   name: Localized
   description: Localized
   price: number
-  tags: Tag[]
 }
 
 export interface MenuSection {
@@ -20,8 +18,8 @@ export interface MenuSection {
   items: MenuItem[]
 }
 
-// [nombre es, nombre en, descripción es, descripción en, etiquetas?]
-type RawItem = [string, string, string, string, Tag[]?]
+// [nombre es, nombre en, descripción es, descripción en]
+type RawItem = [string, string, string, string]
 
 const slugify = (value: string) =>
   value
@@ -62,13 +60,12 @@ const section = (
   title: { es: title[0], en: title[1] },
   eyebrow: { es: eyebrow[0], en: eyebrow[1] },
   image: `/menu/${id}.png`,
-  items: raw.map(([nameEs, nameEn, descEs, descEn, tags], index) => ({
+  items: raw.map(([nameEs, nameEn, descEs, descEn], index) => ({
     id: `${id}-${slugify(nameEs)}`,
     sectionId: id,
     name: { es: nameEs, en: nameEn },
     description: { es: descEs, en: descEn },
     price: placeholderPrice(id, index),
-    tags: tags ?? [],
   })),
 })
 
@@ -79,7 +76,7 @@ export const menu: MenuSection[] = [
     ['Bife de chorizo', 'Sirloin steak', 'Mayonesa casera, bife de chorizo a la plancha, queso Chubut, huevo, lechuga, tomate y papas fritas', 'Homemade mayo, griddled sirloin steak, Chubut cheese, egg, lettuce, tomato and french fries'],
     ['Bondiola de cerdo', 'Pork shoulder', 'Bondiola braseada, coleslaw, pepinillos caseros, cebollas crispy, mostanesa y barbacoa casera', 'Braised pork shoulder, coleslaw, homemade pickles, crispy onions, mostanesa (mustard mayo) and homemade BBQ sauce'],
     ['Vacío braseado', 'Braised flank steak', 'Vacío braseado, salsa balsámica, mayonesa casera, queso Chubut, lechuga, tomate, huevo y papas fritas', 'Braised flank steak, balsamic sauce, homemade mayo, Chubut cheese, lettuce, tomato, egg and french fries'],
-    ['Vegetariano', 'Vegetarian', 'Berenjena, cebolla, pimiento, huevo, queso, champiñón, lechuga y tomate', 'Eggplant, onion, bell pepper, egg, cheese, mushroom, lettuce and tomato', ['vegetariano']],
+    ['Vegetariano', 'Vegetarian', 'Berenjena, cebolla, pimiento, huevo, queso, champiñón, lechuga y tomate', 'Eggplant, onion, bell pepper, egg, cheese, mushroom, lettuce and tomato'],
   ]),
   section('burgers', ['Burgers', 'Burgers'], ['Burgers', 'Burgers'], ['Hechas para ensuciarse las manos', 'Made to get your hands dirty'], [
     ['Clásica', 'Classic', '200 gr. de carne, mayonesa casera, huevo, queso, lechuga, tomate, pan brioche y papas fritas', '200 g beef patty, homemade mayo, egg, cheese, lettuce, tomato, brioche bun and french fries'],
@@ -89,25 +86,25 @@ export const menu: MenuSection[] = [
     ['Lomos 150 gr.', 'Tenderloin sandwich 150 g', 'Pan pita, bife de lomo, lechuga, tomate, queso, huevo, mayonesa casera y papas fritas', 'Pita bread, beef tenderloin steak, lettuce, tomato, cheese, egg, homemade mayo and french fries'],
   ]),
   section('pizzas', ['Pizzas', 'Pizzas'], ['Pizzas', 'Pizzas'], ['La mejor idea fue invitarte', 'The best idea was inviting you'], [
-    ['Mozzarella', 'Mozzarella', 'Salsa de tomate, mozzarella y orégano', 'Tomato sauce, mozzarella and oregano', ['vegetariano']],
-    ['Napolitana', 'Neapolitan', 'Salsa de tomate, mozzarella y tomate en rodajas', 'Tomato sauce, mozzarella and sliced tomato', ['vegetariano']],
+    ['Mozzarella', 'Mozzarella', 'Salsa de tomate, mozzarella y orégano', 'Tomato sauce, mozzarella and oregano'],
+    ['Napolitana', 'Neapolitan', 'Salsa de tomate, mozzarella y tomate en rodajas', 'Tomato sauce, mozzarella and sliced tomato'],
     ['Napo con jamón', 'Neapolitan with ham', 'Salsa de tomate, mozzarella, tomate en rodajas, jamón y oliva saborizada', 'Tomato sauce, mozzarella, sliced tomato, ham and flavored olive oil'],
     ['Rúcula', 'Arugula', 'Salsa de tomate, mozzarella, jamón crudo, rúcula y parmesano', 'Tomato sauce, mozzarella, cured ham, arugula and parmesan'],
     ['Palmitos', 'Hearts of palm', 'Salsa de tomate, mozzarella, jamón cocido, palmitos y salsa golf', 'Tomato sauce, mozzarella, cooked ham, hearts of palm and golf sauce'],
     ['La Comanda', 'La Comanda', 'Salsa de tomate, mozzarella, verdeo, panceta, pollo y champiñones', 'Tomato sauce, mozzarella, scallion, bacon, chicken and mushrooms'],
-    ['Del bosque', 'Forest', 'Salsa de tomate, mozzarella, rúcula, pera, roquefort y nuez', 'Tomato sauce, mozzarella, arugula, pear, roquefort and walnut', ['vegetariano']],
-    ['Cuatro quesos', 'Four cheese', 'Salsa de tomate, mozzarella, provolone, sardo y roquefort', 'Tomato sauce, mozzarella, provolone, sardo and roquefort', ['vegetariano']],
-    ['Provenzal', 'Provençal', 'Salsa de tomate, mozzarella, ajo y perejil', 'Tomato sauce, mozzarella, garlic and parsley', ['vegetariano']],
-    ['Fugazzetta', 'Fugazzetta', 'Salsa de tomate, mozzarella y cebolla dorada', 'Tomato sauce, mozzarella and golden onion', ['vegetariano']],
+    ['Del bosque', 'Forest', 'Salsa de tomate, mozzarella, rúcula, pera, roquefort y nuez', 'Tomato sauce, mozzarella, arugula, pear, roquefort and walnut'],
+    ['Cuatro quesos', 'Four cheese', 'Salsa de tomate, mozzarella, provolone, sardo y roquefort', 'Tomato sauce, mozzarella, provolone, sardo and roquefort'],
+    ['Provenzal', 'Provençal', 'Salsa de tomate, mozzarella, ajo y perejil', 'Tomato sauce, mozzarella, garlic and parsley'],
+    ['Fugazzetta', 'Fugazzetta', 'Salsa de tomate, mozzarella y cebolla dorada', 'Tomato sauce, mozzarella and golden onion'],
     ['Calabresa', 'Calabrese', 'Salsa de tomate, mozzarella y salame', 'Tomato sauce, mozzarella and salami'],
     ['Carbonara', 'Carbonara', 'Salsa de tomate, mozzarella, panceta, huevo y parmesano', 'Tomato sauce, mozzarella, bacon, egg and parmesan'],
   ]),
   section('entradas', ['Entradas', 'Starters'], ['Entradas', 'Starters'], ['Para arrancar', 'To get started'], [
-    ['Papas fritas', 'French fries', 'Papas fritas bastón', 'Thick-cut french fries', ['vegetariano']],
-    ['Papas con huevo', 'Fries with eggs', 'Papas fritas bastón y huevos revueltos', 'Thick-cut french fries and scrambled eggs', ['vegetariano']],
+    ['Papas fritas', 'French fries', 'Papas fritas bastón', 'Thick-cut french fries'],
+    ['Papas con huevo', 'Fries with eggs', 'Papas fritas bastón y huevos revueltos', 'Thick-cut french fries and scrambled eggs'],
     ['Papas jodidas', 'Loaded fries', 'Papas fritas, cheddar, huevo, panceta, verdeo y chile opcional', 'Fries, cheddar, egg, bacon, scallion and optional chili'],
-    ['Provoleta con chutney', 'Provoleta with chutney', 'Provoleta, chutney de tomate y almendras', 'Grilled provolone, tomato chutney and almonds', ['vegetariano']],
-    ['Provoleta con verdeo', 'Provoleta with scallion', 'Provoleta, verdeo y pimentón', 'Grilled provolone, scallion and paprika', ['vegetariano']],
+    ['Provoleta con chutney', 'Provoleta with chutney', 'Provoleta, chutney de tomate y almendras', 'Grilled provolone, tomato chutney and almonds'],
+    ['Provoleta con verdeo', 'Provoleta with scallion', 'Provoleta, verdeo y pimentón', 'Grilled provolone, scallion and paprika'],
     ['Pinchos de langostinos', 'Prawn skewers', 'Langostino empanizado, salsa provenzal y papas fritas', 'Breaded prawns, provençal sauce and french fries'],
   ]),
   section('principales', ['Principales', 'Mains'], ['Platos principales', 'Main dishes'], ['El centro de la mesa', 'The centerpiece of the table'], [
@@ -147,9 +144,4 @@ export const menu: MenuSection[] = [
 
 export const itemsById: Record<string, MenuItem> = Object.fromEntries(
   menu.flatMap((entry) => entry.items.map((item) => [item.id, item] as const)),
-)
-
-// Solo se ofrecen como filtro las etiquetas que algún plato realmente tiene.
-export const availableTags: Tag[] = (['vegetariano', 'sinTacc', 'picante'] as Tag[]).filter((tag) =>
-  menu.some((entry) => entry.items.some((item) => item.tags.includes(tag))),
 )
