@@ -7,12 +7,21 @@ import { Modal } from '@/components/modal'
 import { useOrder } from '@/components/order-provider'
 import { QuantityStepper } from '@/components/quantity-stepper'
 import { formatPrice } from '@/lib/format'
+import { menu } from '@/lib/menu-data'
 
 // Barra fija con el resumen del pedido + hoja con el detalle para mostrarle al mozo.
 export function OrderBar() {
   const { lang, t } = useLanguage()
   const { lines, count, total, add, remove, clear } = useOrder()
   const [open, setOpen] = useState(false)
+
+  // Platos agrupados por categoría, en el mismo orden que el menú.
+  const groups = menu
+    .map((section) => ({
+      section,
+      lines: section.items.flatMap((item) => lines.filter((line) => line.item.id === item.id)),
+    }))
+    .filter((group) => group.lines.length > 0)
 
   return (
     <>
@@ -58,17 +67,26 @@ export function OrderBar() {
                 <p className="p-6 text-sm text-muted-foreground">{t.orderEmpty}</p>
               ) : (
                 <>
-                  <ul className="divide-y divide-border/70 px-6">
-                    {lines.map(({ item, quantity }) => (
-                      <li key={item.id} className="flex items-center justify-between gap-3 py-3.5">
-                        <div className="min-w-0">
-                          <p className="font-serif text-sm uppercase tracking-wide text-foreground">{item.name[lang]}</p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">{formatPrice(item.price * quantity)}</p>
-                        </div>
-                        <QuantityStepper name={item.name[lang]} quantity={quantity} onAdd={() => add(item.id)} onRemove={() => remove(item.id)} />
-                      </li>
+                  <div className="space-y-5 px-6 pt-4">
+                    {groups.map(({ section, lines: groupLines }) => (
+                      <section key={section.id} aria-labelledby={`order-${section.id}`}>
+                        <h3 id={`order-${section.id}`} className="text-[10px] font-semibold uppercase tracking-[0.25em] text-primary">
+                          {section.title[lang]}
+                        </h3>
+                        <ul className="divide-y divide-border/70">
+                          {groupLines.map(({ item, quantity }) => (
+                            <li key={item.id} className="flex items-center justify-between gap-3 py-3">
+                              <div className="min-w-0">
+                                <p className="font-serif text-sm uppercase tracking-wide text-foreground">{item.name[lang]}</p>
+                                <p className="mt-0.5 text-xs text-muted-foreground">{formatPrice(item.price * quantity)}</p>
+                              </div>
+                              <QuantityStepper name={item.name[lang]} quantity={quantity} onAdd={() => add(item.id)} onRemove={() => remove(item.id)} />
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
                     ))}
-                  </ul>
+                  </div>
                   <div className="space-y-3 border-t border-border p-6">
                     <p className="flex items-baseline justify-between">
                       <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t.estimatedTotal}</span>
