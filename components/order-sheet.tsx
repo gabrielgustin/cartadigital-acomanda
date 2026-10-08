@@ -7,16 +7,15 @@ import { Modal } from '@/components/modal'
 import { useOrder } from '@/components/order-provider'
 import { QuantityStepper } from '@/components/quantity-stepper'
 import { formatPrice } from '@/lib/format'
-import { menu } from '@/lib/menu-data'
 
 // Barra fija con el resumen del pedido + hoja con el detalle para mostrarle al mozo.
 export function OrderBar() {
   const { lang, t } = useLanguage()
-  const { lines, count, total, add, remove, clear } = useOrder()
+  const { sections, lines, count, total, add, remove, clear } = useOrder()
   const [open, setOpen] = useState(false)
 
   // Platos agrupados por categoría, en el mismo orden que el menú.
-  const groups = menu
+  const groups = sections
     .map((section) => ({
       section,
       lines: section.items.flatMap((item) => lines.filter((line) => line.item.id === item.id)),
@@ -30,14 +29,14 @@ export function OrderBar() {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="pointer-events-auto flex w-full max-w-md items-center justify-between gap-4 rounded-full bg-primary px-5 py-3.5 text-primary-foreground shadow-xl shadow-primary/30 transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="pointer-events-auto flex w-full max-w-md items-center justify-between gap-4 rounded-pill bg-button px-5 py-3.5 text-button-foreground shadow-xl shadow-button/30 transition hover:bg-button/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <span className="flex items-center gap-2.5 text-sm font-semibold">
               <ClipboardList className="h-5 w-5" aria-hidden />
               {t.viewOrder}
-              <span className="rounded-full bg-primary-foreground/20 px-2 py-0.5 text-xs">{t.itemsCount(count)}</span>
+              <span className="rounded-pill bg-button-foreground/20 px-2 py-0.5 text-xs">{t.itemsCount(count)}</span>
             </span>
-            <span className="font-serif text-sm tracking-wide">{formatPrice(total)}</span>
+            <span className="font-heading text-sm">{formatPrice(total)}</span>
           </button>
         </div>
       )}
@@ -48,7 +47,7 @@ export function OrderBar() {
             <div className="flex flex-col">
               <div className="flex items-start justify-between gap-4 border-b border-border p-6 pb-4">
                 <div>
-                  <h2 id="order-dialog-title" className="font-serif text-2xl uppercase tracking-wide text-foreground">
+                  <h2 id="order-dialog-title" className="font-heading text-2xl text-heading">
                     {t.orderTitle}
                   </h2>
                   <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{t.orderHint}</p>
@@ -57,7 +56,7 @@ export function OrderBar() {
                   type="button"
                   onClick={close}
                   aria-label={t.closeOrder}
-                  className="shrink-0 rounded-full bg-muted p-2 text-foreground transition hover:bg-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="shrink-0 rounded-pill bg-muted p-2 text-foreground transition hover:bg-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <X className="h-5 w-5" aria-hidden />
                 </button>
@@ -70,14 +69,14 @@ export function OrderBar() {
                   <div className="space-y-5 px-6 pt-4">
                     {groups.map(({ section, lines: groupLines }) => (
                       <section key={section.id} aria-labelledby={`order-${section.id}`}>
-                        <h3 id={`order-${section.id}`} className="text-[10px] font-semibold uppercase tracking-[0.25em] text-primary">
+                        <h3 id={`order-${section.id}`} className="text-[10px] font-semibold uppercase tracking-[0.25em] text-eyebrow">
                           {section.title[lang]}
                         </h3>
                         <ul className="divide-y divide-border/70">
                           {groupLines.map(({ item, quantity }) => (
                             <li key={item.id} className="flex items-center justify-between gap-3 py-3">
                               <div className="min-w-0">
-                                <p className="font-serif text-sm uppercase tracking-wide text-foreground">{item.name[lang]}</p>
+                                <p className="font-heading text-sm text-heading">{item.name[lang]}</p>
                                 <p className="mt-0.5 text-xs text-muted-foreground">{formatPrice(item.price * quantity)}</p>
                               </div>
                               <QuantityStepper name={item.name[lang]} quantity={quantity} onAdd={() => add(item.id)} onRemove={() => remove(item.id)} />
@@ -90,7 +89,7 @@ export function OrderBar() {
                   <div className="space-y-3 border-t border-border p-6">
                     <p className="flex items-baseline justify-between">
                       <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t.estimatedTotal}</span>
-                      <span className="font-serif text-xl text-primary">{formatPrice(total)}</span>
+                      <span className="font-heading text-xl text-price">{formatPrice(total)}</span>
                     </p>
                     <button
                       type="button"
@@ -98,7 +97,7 @@ export function OrderBar() {
                         clear()
                         close()
                       }}
-                      className="w-full rounded-full border border-border py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground transition hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                      className="w-full rounded-pill border border-border py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground transition hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                     >
                       {t.clearOrder}
                     </button>

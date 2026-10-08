@@ -13,3 +13,9 @@ __v0_jsx-dev-runtime.ts
 node_modules
 .next/
 .DS_Store
+# Datos editables del backoffice (carta e imágenes subidas)
+/data
+
+# Generados por TypeScript / Next
+*.tsbuildinfo
+next-env.d.ts

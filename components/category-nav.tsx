@@ -1,29 +1,19 @@
 'use client'
 
 import { useLayoutEffect, useRef, useState } from 'react'
-import { Baby, Beer, Pizza, Salad, Sandwich, Utensils, Wine, type LucideIcon } from 'lucide-react'
 import { useLanguage } from '@/components/language-provider'
-
-const icons: Record<string, LucideIcon> = {
-  sandwiches: Sandwich,
-  burgers: Utensils,
-  pizzas: Pizza,
-  entradas: Salad,
-  principales: Utensils,
-  mexicana: Utensils,
-  bebidas: Wine,
-  cervezas: Beer,
-  infantil: Baby,
-}
+import { useSiteTheme } from '@/components/site-theme'
+import { getCategoryIcon } from '@/lib/category-icons'
 
 interface CategoryNavProps {
-  sections: { id: string; label: string }[]
+  sections: { id: string; label: string; icon: string }[]
   activeSection: string
   onSelect: (event: React.MouseEvent<HTMLAnchorElement>, id: string) => void
 }
 
 export function CategoryNav({ sections, activeSection, onSelect }: CategoryNavProps) {
   const { t } = useLanguage()
+  const { showCategoryIcons } = useSiteTheme()
   const navRef = useRef<HTMLElement>(null)
   const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({})
   const [pillRect, setPillRect] = useState({ width: 0, height: 0, left: 0 })
@@ -95,11 +85,11 @@ export function CategoryNav({ sections, activeSection, onSelect }: CategoryNavPr
         className="pointer-events-none absolute inset-y-0 z-0 my-auto"
         style={{ width: pillRect.width, height: pillRect.height, left: pillRect.left }}
       >
-        <span className="absolute inset-0 rounded-full border border-border bg-card" />
-        <span className={`pill-paint ${paintDirectionRef.current === 'left' ? 'pill-paint-left' : ''} absolute inset-0 rounded-full shadow-md shadow-primary/20`} />
+        <span className="absolute inset-0 rounded-pill border border-border bg-card" />
+        <span className={`pill-paint ${paintDirectionRef.current === 'left' ? 'pill-paint-left' : ''} absolute inset-0 rounded-pill shadow-md shadow-pill/20`} />
       </div>
-      {sections.map(({ id, label }) => {
-        const Icon = icons[id] ?? Utensils
+      {sections.map(({ id, label, icon }) => {
+        const Icon = getCategoryIcon(icon)
         return (
           <a
             key={id}
@@ -110,9 +100,9 @@ export function CategoryNav({ sections, activeSection, onSelect }: CategoryNavPr
             href={`#${id}`}
             onClick={(event) => onSelect(event, id)}
             aria-current={activeSection === id ? 'true' : undefined}
-            className={`relative z-10 flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition-colors duration-300 ease-out ${activeSection === id ? 'delay-100 border-transparent bg-transparent text-primary-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}
+            className={`relative z-10 flex shrink-0 items-center gap-2 rounded-pill border px-3.5 py-2 text-xs font-semibold transition-colors duration-300 ease-out ${activeSection === id ? 'delay-100 border-transparent bg-transparent text-pill-foreground' : 'border-border bg-card text-muted-foreground hover:border-primary hover:text-primary'}`}
           >
-            <Icon className="h-3.5 w-3.5" aria-hidden />
+            {showCategoryIcons && <Icon className="h-3.5 w-3.5" aria-hidden />}
             {label}
           </a>
         )

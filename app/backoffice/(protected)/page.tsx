@@ -1,0 +1,66 @@
+import Link from 'next/link'
+import { ExternalLink, Grid3X3, Palette, QrCode, UtensilsCrossed, type LucideIcon } from 'lucide-react'
+import { PageShell } from '@/components/backoffice/page-shell'
+import { getStore } from '@/lib/store'
+
+export default async function BackofficeHome() {
+  const { sections } = await getStore()
+  const products = sections.reduce((sum, section) => sum + section.items.length, 0)
+
+  const main: { href: string; title: string; detail: string; Icon: LucideIcon }[] = [
+    { href: '/backoffice/categorias', title: 'Categorías', detail: sections.length === 1 ? '1 categoría' : `${sections.length} categorías`, Icon: Grid3X3 },
+    { href: '/backoffice/productos', title: 'Productos', detail: products === 1 ? '1 producto' : `${products} productos`, Icon: UtensilsCrossed },
+  ]
+  const custom: { href: string; title: string; Icon: LucideIcon }[] = [
+    { href: '/backoffice/codigo-qr', title: 'Código QR', Icon: QrCode },
+    { href: '/backoffice/personalizar', title: 'Personaliza tu App', Icon: Palette },
+  ]
+
+  return (
+    <PageShell width="max-w-5xl">
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="flex-1">
+          <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+            {main.map(({ href, title, detail, Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex h-30 flex-col items-center justify-center rounded-lg border border-[#1e4b8e] bg-white p-6 text-center transition-shadow hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e4b8e]/50"
+              >
+                <Icon className="mb-2 h-8 w-8 text-[#1e4b8e]" aria-hidden />
+                <span className="font-medium text-gray-700">{title}</span>
+                <span className="text-xs text-gray-500">{detail}</span>
+              </Link>
+            ))}
+          </div>
+
+          <h2 className="mb-6 text-xl font-medium text-[#1e4b8e]">Personaliza tu tienda</h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {custom.map(({ href, title, Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex items-center rounded-lg bg-gray-50 p-4 transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1e4b8e]/50"
+              >
+                <span className="mr-4 rounded-lg bg-gray-200 p-2">
+                  <Icon className="h-5 w-5 text-[#1e4b8e]" aria-hidden />
+                </span>
+                <span className="font-medium text-gray-700">{title}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <aside className="w-full lg:w-[350px]">
+          <div className="rounded-lg bg-[#1e4b8e] p-6 text-white">
+            <h3 className="mb-6 text-lg font-medium">Conoce más sobre Autogestiva</h3>
+            <Link href="https://www.autogestiva.com.ar" target="_blank" rel="noopener noreferrer" className="flex items-center hover:underline">
+              <ExternalLink className="mr-4 h-5 w-5" aria-hidden />
+              Visita nuestro sitio web
+            </Link>
+          </div>
+        </aside>
+      </div>
+    </PageShell>
+  )
+}

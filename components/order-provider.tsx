@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { itemsById, type MenuItem } from '@/lib/menu-data'
+import type { MenuItem, MenuSection } from '@/lib/menu-data'
 
 const STORAGE_KEY = 'la-comanda-order'
 
@@ -13,6 +13,7 @@ export interface OrderLine {
 }
 
 interface OrderContextValue {
+  sections: MenuSection[]
   quantities: Quantities
   lines: OrderLine[]
   count: number
@@ -24,7 +25,11 @@ interface OrderContextValue {
 
 const OrderContext = createContext<OrderContextValue | null>(null)
 
-export function OrderProvider({ children }: { children: React.ReactNode }) {
+export function OrderProvider({ sections, children }: { sections: MenuSection[]; children: React.ReactNode }) {
+  const itemsById = useMemo(
+    () => Object.fromEntries(sections.flatMap((section) => section.items.map((item) => [item.id, item] as const))),
+    [sections],
+  )
   const [quantities, setQuantities] = useState<Quantities>({})
   const [hydrated, setHydrated] = useState(false)
 
@@ -44,7 +49,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       }
     } catch {}
     setHydrated(true)
-  }, [])
+  }, [itemsById])
 
   useEffect(() => {
     if (!hydrated) return
@@ -73,6 +78,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       .map(([id, quantity]) => ({ item: itemsById[id], quantity }))
       .filter((line): line is OrderLine => Boolean(line.item))
     return {
+      sections,
       quantities,
       lines,
       count: lines.reduce((sum, line) => sum + line.quantity, 0),
@@ -81,7 +87,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       remove,
       clear,
     }
-  }, [quantities, add, remove, clear])
+  }, [sections, itemsById, quantities, add, remove, clear])
 
   return <OrderContext.Provider value={value}>{children}</OrderContext.Provider>
 }

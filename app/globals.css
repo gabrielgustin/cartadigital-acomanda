@@ -5,8 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-bevan), Georgia, 'Times New Roman', serif;
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-heading), Georgia, 'Times New Roman', serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -18,6 +18,22 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-price: var(--price);
+  --color-heading: var(--heading);
+  --color-eyebrow: var(--eyebrow);
+  --color-button: var(--button);
+  --color-button-foreground: var(--button-foreground);
+  --color-pill: var(--pill);
+  --color-pill-foreground: var(--pill-foreground);
+  --color-hero: var(--hero-bg);
+  --color-nav: var(--nav-bg);
+  --color-footer: var(--footer-bg);
+}
+
+/* Estos dos no son "inline": el backoffice los cambia en :root y las clases lo siguen. */
+@theme {
+  --radius-pill: 9999px;
+  --radius-logo: 9999px;
 }
 
 :root {
@@ -34,6 +50,28 @@
   --input: oklch(0.87 0.025 65);
   --ring: oklch(0.48 0.14 32);
   --radius: 0.75rem;
+
+  /* Piezas que por defecto copian a otra: "Personaliza tu App" puede separarlas. */
+  --price: var(--primary);
+  --heading: var(--foreground);
+  --eyebrow: var(--primary);
+  --button: var(--primary);
+  --button-foreground: var(--primary-foreground);
+  --pill: var(--primary);
+  --pill-foreground: var(--primary-foreground);
+  --accent: #c9915f;
+  --hero-bg: var(--background);
+  --nav-bg: var(--background);
+  --footer-bg: var(--card);
+
+  --font-heading: var(--font-bevan);
+  --font-body: var(--font-dm-sans);
+  --heading-case: uppercase;
+  --heading-tracking: 0.025em;
+  --content-width: 72rem;
+  --logo-size: 11rem;
+  --logo-size-sm: 13rem;
+  --hero-pattern-image: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--primary) 10%, transparent) 1px, transparent 0);
 }
 
 @layer base {
@@ -42,15 +80,17 @@
   body { @apply bg-background text-foreground font-sans; }
 }
 
-.hero-pattern { background-image: radial-gradient(circle at 1px 1px, rgb(67 40 28 / 0.1) 1px, transparent 0); background-size: 22px 22px; }
+.hero-pattern { background-color: var(--hero-bg); background-image: var(--hero-pattern-image); background-size: 22px 22px; }
+.logo-frame { width: var(--logo-size); height: var(--logo-size); }
+@media (min-width: 640px) { .logo-frame { width: var(--logo-size-sm); height: var(--logo-size-sm); } }
 .pill-paint {
-  background-image: linear-gradient(100deg, var(--primary) 0%, var(--primary) 35%, color-mix(in srgb, var(--primary) 55%, #c9915f) 50%, var(--primary) 65%, var(--primary) 100%);
+  background-image: linear-gradient(100deg, var(--pill) 0%, var(--pill) 35%, color-mix(in srgb, var(--pill) 55%, var(--accent)) 50%, var(--pill) 65%, var(--pill) 100%);
   background-size: 300% 100%;
   animation: pill-wipe 420ms cubic-bezier(0.22, 1, 0.36, 1) both, pill-sheen 700ms ease-out both;
 }
 @keyframes pill-wipe {
-  from { clip-path: inset(0 100% 0 0 round 9999px); }
-  to { clip-path: inset(0 0 0 0 round 9999px); }
+  from { clip-path: inset(0 100% 0 0 round var(--radius-pill)); }
+  to { clip-path: inset(0 0 0 0 round var(--radius-pill)); }
 }
 @keyframes pill-sheen {
   from { background-position: 100% 0; }
@@ -60,8 +100,8 @@
   animation: pill-wipe-left 420ms cubic-bezier(0.22, 1, 0.36, 1) both, pill-sheen-left 700ms ease-out both;
 }
 @keyframes pill-wipe-left {
-  from { clip-path: inset(0 0 0 100% round 9999px); }
-  to { clip-path: inset(0 0 0 0 round 9999px); }
+  from { clip-path: inset(0 0 0 100% round var(--radius-pill)); }
+  to { clip-path: inset(0 0 0 0 round var(--radius-pill)); }
 }
 @keyframes pill-sheen-left {
   from { background-position: 0% 0; }
@@ -91,6 +131,13 @@
 ::selection { background: oklch(0.48 0.14 32 / 0.2); }
 
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* Fuente, mayúsculas y separación de todos los títulos de la carta. */
+@utility font-heading {
+  font-family: var(--font-heading), Georgia, 'Times New Roman', serif;
+  text-transform: var(--heading-case);
+  letter-spacing: var(--heading-tracking);
+}
 
 @utility text-balance { text-wrap: balance; }
 @utility text-pretty { text-wrap: pretty; }

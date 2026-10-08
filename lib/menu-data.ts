@@ -7,6 +7,10 @@ export interface MenuItem {
   name: Localized
   description: Localized
   price: number
+  /** Imagen propia del plato; si falta se usa la de su categoría. */
+  image?: string
+  /** Un plato oculto no aparece en la carta pública. */
+  visible: boolean
 }
 
 export interface MenuSection {
@@ -15,6 +19,10 @@ export interface MenuSection {
   title: Localized
   eyebrow: Localized
   image: string
+  /** Clave de `lib/category-icons.ts`. */
+  icon: string
+  /** Una categoría oculta no aparece en la carta pública. */
+  visible: boolean
   items: MenuItem[]
 }
 
@@ -48,6 +56,18 @@ const placeholderPrice = (sectionId: string, index: number) => {
   return (placeholderBase[sectionId] ?? 5000) + index * step
 }
 
+const seedIcons: Record<string, string> = {
+  sandwiches: 'sandwich',
+  burgers: 'utensils',
+  pizzas: 'pizza',
+  entradas: 'salad',
+  principales: 'utensils',
+  mexicana: 'utensils',
+  bebidas: 'wine',
+  cervezas: 'beer',
+  infantil: 'baby',
+}
+
 const section = (
   id: string,
   label: [string, string],
@@ -60,16 +80,20 @@ const section = (
   title: { es: title[0], en: title[1] },
   eyebrow: { es: eyebrow[0], en: eyebrow[1] },
   image: `/menu/${id}.png`,
+  icon: seedIcons[id] ?? 'utensils',
+  visible: true,
   items: raw.map(([nameEs, nameEn, descEs, descEn], index) => ({
     id: `${id}-${slugify(nameEs)}`,
     sectionId: id,
     name: { es: nameEs, en: nameEn },
     description: { es: descEs, en: descEn },
     price: placeholderPrice(id, index),
+    visible: true,
   })),
 })
 
-export const menu: MenuSection[] = [
+/** Carta inicial: se usa hasta que el backoffice guarda cambios por primera vez. */
+export const seedMenu: MenuSection[] = [
   section('sandwiches', ['Sandwiches', 'Sandwiches'], ['Sandwiches especiales', 'Special sandwiches'], ['Lo bueno se comparte', 'Good things are meant to be shared'], [
     ['Entraña', 'Skirt steak', 'Mayonesa casera, entraña braseada, rúcula, champiñones, tomate confitado y papas fritas', 'Homemade mayo, braised skirt steak, arugula, mushrooms, confit tomato and french fries'],
     ['Molleja', 'Sweetbreads', 'Mayonesa casera, mollejitas grilladas al limón, queso Chubut, lechuga, tomate y papas fritas', 'Homemade mayo, lemon-grilled sweetbreads, Chubut cheese, lettuce, tomato and french fries'],
@@ -141,7 +165,3 @@ export const menu: MenuSection[] = [
     ['Milanesita de ternera', 'Veal milanesa', 'Milanesita de ternera y papas fritas', 'Small breaded veal cutlet and french fries'],
   ]),
 ]
-
-export const itemsById: Record<string, MenuItem> = Object.fromEntries(
-  menu.flatMap((entry) => entry.items.map((item) => [item.id, item] as const)),
-)

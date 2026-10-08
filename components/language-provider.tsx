@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useSiteTheme } from '@/components/site-theme'
 import { strings, type Strings } from '@/lib/i18n'
 import type { Lang } from '@/lib/menu-data'
 
@@ -15,6 +16,7 @@ interface LanguageContextValue {
 const LanguageContext = createContext<LanguageContextValue | null>(null)
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const { texts } = useSiteTheme()
   // El servidor siempre renderiza en español; el idioma guardado o el del
   // dispositivo se aplica después de hidratar para no desfasar el HTML.
   const [lang, setLangState] = useState<Lang>('es')
@@ -39,7 +41,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [])
 
-  const value = useMemo(() => ({ lang, setLang, t: strings[lang] }), [lang, setLang])
+  // Los textos que el dueño cambió desde el backoffice pisan a los originales.
+  const value = useMemo(() => {
+    const overrides = Object.fromEntries(Object.entries(texts).flatMap(([key, entry]) => (entry?.[lang] ? [[key, entry[lang]]] : [])))
+    return { lang, setLang, t: { ...strings[lang], ...overrides } }
+  }, [lang, setLang, texts])
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>
 }

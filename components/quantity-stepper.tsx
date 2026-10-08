@@ -10,8 +10,10 @@ interface QuantityStepperProps {
   onRemove: () => void
 }
 
-const buttonClass =
-  'flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-primary transition hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60'
+const baseClass =
+  'flex h-8 w-8 items-center justify-center rounded-pill border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-button/60'
+const buttonClass = `${baseClass} border-border bg-card text-button hover:border-button`
+const addClass = `${baseClass} border-transparent bg-button text-button-foreground hover:bg-button/90`
 
 // Sin unidades muestra solo "+"; con unidades muestra "− n +".
 export function QuantityStepper({ name, quantity, onAdd, onRemove }: QuantityStepperProps) {
@@ -19,7 +21,7 @@ export function QuantityStepper({ name, quantity, onAdd, onRemove }: QuantitySte
 
   if (quantity === 0) {
     return (
-      <button type="button" onClick={onAdd} aria-label={t.addOne(name)} className={`${buttonClass} bg-primary text-primary-foreground hover:bg-primary/90`}>
+      <button type="button" onClick={onAdd} aria-label={t.addOne(name)} className={addClass}>
         <Plus className="h-4 w-4" aria-hidden />
       </button>
     )
